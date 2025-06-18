@@ -1,236 +1,84 @@
-/* Custom styles for Sport Room Booking App */
+/* Custom styles for Sport Room Booking System */
 
-/* Override body margin only for 3D viewer page */
-body.viewer-page {
-	margin: 0;
-	overflow: hidden;
+:root {
+	--primary-color: #007bff;
+	--secondary-color: #6c757d;
+	--success-color: #28a745;
+	--danger-color: #dc3545;
+	--warning-color: #ffc107;
+	--info-color: #17a2b8;
 }
 
-/* General styles */
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+main {
+	flex: 1;
+}
+
+/* Navigation customization */
 .navbar-brand {
 	font-weight: bold;
+	font-size: 1.5rem;
 }
 
+/* Card styling */
 .card {
-	border-radius: 10px;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-	transition: transform 0.2s, box-shadow 0.2s;
+	box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+	border: none;
 }
 
 .card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+	transition: box-shadow 0.3s ease-in-out;
 }
 
-.btn {
-	border-radius: 8px;
-	transition: all 0.2s;
-}
-
-.btn:hover {
-	transform: translateY(-1px);
-}
-
-/* Alert styles */
-.alert {
-	border-radius: 8px;
-	border: none;
-}
-
-/* Form styles */
-.form-control {
-	border-radius: 8px;
-	border: 1px solid #dee2e6;
-	transition: border-color 0.2s, box-shadow 0.2s;
-}
-
+/* Form styling */
 .form-control:focus {
-	border-color: #007bff;
+	border-color: var(--primary-color);
 	box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-/* 3D Viewer specific styles */
-#viewer-container canvas {
-	display: block;
-}
-
-.legend-panel {
-	box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-}
-
-.legend-panel h5,
-.legend-panel h6 {
-	color: #495057;
-}
-
-.legend-btn:hover {
-	background-color: #007bff;
-	color: white;
-	border-color: #007bff;
-}
-
-.legend-zoom:hover {
-	background-color: #6c757d;
-	color: white;
-	border-color: #6c757d;
-}
-
-/* Modal styles */
-.modal-content {
-	border-radius: 15px;
+/* Alert customization */
+.alert {
 	border: none;
-	overflow: hidden;
+	border-radius: 0.5rem;
 }
 
-.modal-header {
-	border-bottom: none;
-	border-radius: 15px 15px 0 0;
+/* Button hover effects */
+.btn {
+	transition: all 0.3s ease;
 }
 
-.modal-body {
-	padding: 2rem;
+.btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 
-/* Building info cards */
-.info-card {
-	border: 1px solid #e9ecef;
-	transition: background-color 0.2s;
-}
-
-.info-card:hover {
-	background-color: #f8f9fa !important;
-}
-
-.info-card h6 {
-	color: #495057;
-	margin-bottom: 0.5rem;
-	font-weight: 600;
-}
-
-/* Status indicators */
-.status-active {
-	background-color: #d4edda;
-	padding: 0.25rem 0.5rem;
-	border-radius: 4px;
-}
-
-.status-expired {
-	background-color: #f8d7da;
-	padding: 0.25rem 0.5rem;
-	border-radius: 4px;
-}
-
-/* Table styles */
-.table {
-	border-radius: 8px;
-	overflow: hidden;
-}
-
-.table th {
-	background-color: #f8f9fa;
-	border-top: none;
-	font-weight: 600;
-	color: #495057;
-}
-
-/* Footer styles */
+/* Footer styling */
 footer {
 	margin-top: auto;
 }
 
-/* Dashboard specific styles */
-.display-6 {
-	font-size: 2rem;
+/* 3D Map placeholder styling */
+#map-container {
+	width: 100%;
+	height: 500px;
+	border: 1px solid #dee2e6;
+	border-radius: 0.25rem;
+	position: relative;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-	.legend-panel {
-		width: 250px;
-		right: -250px;
+	.navbar-brand {
+		font-size: 1.25rem;
 	}
 
-	.legend-toggle {
-		right: 5px;
-		padding: 8px 12px;
+	#map-container {
+		height: 300px;
 	}
-
-	#viewer-container {
-		height: calc(100vh - 56px);
-	}
-}
-
-@media (max-width: 576px) {
-	.modal-dialog {
-		margin: 0.5rem;
-	}
-
-	.legend-panel {
-		width: 220px;
-		right: -220px;
-	}
-
-	.building-image {
-		height: 150px;
-	}
-}
-
-/* Animation classes */
-.fade-in {
-	animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-/* Loading spinner */
-.spinner-border-sm {
-	width: 1rem;
-	height: 1rem;
-}
-
-/* Success/Error message styles */
-.alert-success {
-	background-color: #d4edda;
-	border-color: #c3e6cb;
-	color: #155724;
-}
-
-.alert-danger {
-	background-color: #f8d7da;
-	border-color: #f1b6bb;
-	color: #721c24;
-}
-
-.alert-info {
-	background-color: #cce7ff;
-	border-color: #b3d9ff;
-	color: #004085;
-}
-
-/* Custom scrollbar for legend panel */
-.legend-panel::-webkit-scrollbar {
-	width: 6px;
-}
-
-.legend-panel::-webkit-scrollbar-track {
-	background: #f1f1f1;
-	border-radius: 3px;
-}
-
-.legend-panel::-webkit-scrollbar-thumb {
-	background: #c1c1c1;
-	border-radius: 3px;
-}
-
-.legend-panel::-webkit-scrollbar-thumb:hover {
-	background: #a8a8a8;
 }
