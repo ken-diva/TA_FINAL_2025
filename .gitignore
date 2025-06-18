@@ -10,3 +10,7 @@ docs/_build/
 env/
 .venv/
 *.egg-info/
+.env
+.env.example
+__pycache__/
+__init__.py
