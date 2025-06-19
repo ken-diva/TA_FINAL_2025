@@ -151,43 +151,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <!-- Our 3D map script - defer to ensure DOM is loaded -->
 <script src="{{ url_for('static', filename='js/map3d.js') }}" defer></script>
-<script>
-  // Test modal functionality
-  window.addEventListener('load', function () {
-    console.log('Page fully loaded');
-    const modal = document.getElementById('buildingModal');
-    console.log('Modal element:', modal);
-
-    // Add a test button to verify modal works
-    const testBtn = document.createElement('button');
-    testBtn.textContent = 'Test Modal';
-    testBtn.className = 'btn btn-sm btn-warning position-fixed';
-    testBtn.style.bottom = '20px';
-    testBtn.style.right = '20px';
-    testBtn.style.zIndex = '1000';
-    testBtn.onclick = function () {
-      const modalEl = document.getElementById('buildingModal');
-      if (modalEl) {
-        const bsModal = new bootstrap.Modal(modalEl);
-        document.getElementById('building-name').textContent = 'Test Building';
-        document.getElementById('building-description').textContent = 'This is a test to verify modal works.';
-
-        const imageEl = document.getElementById('building-image');
-        imageEl.src = 'https://via.placeholder.com/300x200?text=Building+Image';  // Replace with a real image URL from your DB
-        imageEl.style.display = 'block';
-
-        bsModal.show();
-      } else {
-        alert('Modal not found!');
-      }
-    };
-
-  });
-</script>
 {% endblock %}
-
-
-
 
 {% block content %}
 <div class="row">
@@ -269,28 +233,6 @@
         <div class="mt-2 text-muted small">
           <i class="bi bi-mouse"></i> Left click + drag to rotate | Scroll to zoom | Right click + drag to pan
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- Building Detail Modal -->
-<div class="modal fade" id="buildingModal" tabindex="-1" aria-labelledby="buildingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="building-name">Building Name</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body d-flex flex-column flex-md-row gap-4">
-        <img id="building-image" src="" alt="Building Image" class="img-fluid rounded shadow-sm"
-          style="max-width: 300px; max-height: 200px; object-fit: cover; display: none;">
-        <p id="building-description" class="mb-0 text-muted">Description of the building goes here.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <!-- You can add a "Book Now" button here if needed -->
       </div>
     </div>
   </div>
