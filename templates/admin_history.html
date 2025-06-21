@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Booking History{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Admin – Booking History</h2>
+
+{% if bookings %}
+<div class="table-responsive">
+  <table id="bookingHistoryTable" class="table table-striped table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Building</th>
+        <th>Room</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.id }}</td>
+        <td>
+          {{ b.username }}<br>
+          <small class="text-muted">{{ b.email }}</small>
+        </td>
+        <td>{{ b.building_name }}</td>
+        <td>{{ b.room_name }}</td>
+        <td>{{ b.start_time }}</td>
+        <td>{{ b.end_time }}</td>
+        <td>
+          <span
+            class="badge bg-{% if b.status == 'Approve' %}success{% elif b.status == 'Reject' %}danger{% else %}secondary{% endif %}">
+            {{ b.status }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted">No history found.</p>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    new DataTable('#bookingHistoryTable');
+  });
+</script>
+{% endblock %}

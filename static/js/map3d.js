@@ -544,6 +544,32 @@ function showBuildingModal(buildingCode) {
 		if (bookBtn) bookBtn.style.display = "none";
 	}
 
+	const buildingCodeInput = document.getElementById("booking-building-code");
+	if (buildingCodeInput) {
+		buildingCodeInput.value = buildingCode;
+	}
+
+	fetch(`/api/sports_rooms/${buildingCode}`)
+		.then((res) => res.json())
+		.then((rooms) => {
+			const roomSelect = document.getElementById("sports-room");
+			roomSelect.innerHTML = "";
+
+			if (rooms.length === 0) {
+				const option = document.createElement("option");
+				option.textContent = "No rooms available";
+				option.disabled = true;
+				roomSelect.appendChild(option);
+			} else {
+				rooms.forEach((room) => {
+					const option = document.createElement("option");
+					option.value = room.id;
+					option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+					roomSelect.appendChild(option);
+				});
+			}
+		});
+
 	modal.show();
 }
 

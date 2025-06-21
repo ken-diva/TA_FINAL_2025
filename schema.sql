@@ -71,26 +71,4 @@ INSERT INTO users (username, password, email, role) VALUES
 
 -- Regular user (password: user123)
 INSERT INTO users (username, password, email, role) VALUES 
-('john_doe', 'user123', 'john@example.com', 'user');
-
--- Sample buildings
-INSERT INTO building (name, code, description, image_url) VALUES 
-('Sports Complex A', 'SCA', 'Main sports complex with multiple indoor courts', '/static/images/complex_a.jpg'),
-('Sports Complex B', 'SCB', 'Secondary sports complex with swimming pool', '/static/images/complex_b.jpg'),
-('Fitness Center', 'FC', 'Modern fitness center with gym equipment', '/static/images/fitness_center.jpg');
-
--- Sample sports rooms
-INSERT INTO sports_room (id_building, name, capacity, facility, image_url) VALUES 
-(1, 'Basketball Court 1', 20, 'Full-size basketball court, scoreboard, bleachers', '/static/images/basketball1.jpg'),
-(1, 'Basketball Court 2', 20, 'Full-size basketball court, scoreboard', '/static/images/basketball2.jpg'),
-(1, 'Badminton Court A', 4, '2 badminton courts, equipment rental available', '/static/images/badminton_a.jpg'),
-(2, 'Swimming Pool', 50, 'Olympic-size pool, 8 lanes, diving board', '/static/images/pool.jpg'),
-(2, 'Tennis Court 1', 4, 'Indoor tennis court, lighting, equipment rental', '/static/images/tennis1.jpg'),
-(3, 'Gym Floor 1', 30, 'Cardio machines, weight training equipment', '/static/images/gym1.jpg'),
-(3, 'Yoga Studio', 15, 'Mirrors, mats, sound system', '/static/images/yoga.jpg');
-
--- Sample bookings
-INSERT INTO booking_room (id_user, id_sports_room, start_time, end_time, status) VALUES 
-(2, 1, '2025-06-20 09:00:00', '2025-06-20 11:00:00', 'Approve'),
-(2, 3, '2025-06-21 14:00:00', '2025-06-21 15:00:00', 'Pending'),
-(2, 5, '2025-06-22 16:00:00', '2025-06-22 18:00:00', 'Reject');
+('user', 'user123', 'john@example.com', 'user');

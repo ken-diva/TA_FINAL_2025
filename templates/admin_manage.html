@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Manage Buildings & Rooms{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Admin – Manage Buildings & Sports Rooms</h2>
+
+<ul class="nav nav-tabs mb-4" id="manageTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="buildings-tab" data-bs-toggle="tab" data-bs-target="#buildings" type="button"
+      role="tab">Buildings</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms" type="button" role="tab">Sports
+      Rooms</button>
+  </li>
+</ul>
+
+<div class="tab-content" id="manageTabsContent">
+  <div class="tab-pane fade show active" id="buildings" role="tabpanel">
+    <div class="table-responsive">
+      <table id="buildingsTable" class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in buildings %}
+          <tr>
+            <td>{{ b.id }}</td>
+            <td>{{ b.name }}</td>
+            <td>{{ b.code }}</td>
+            <td>{{ b.description }}</td>
+            <td><img src="{{ b.image_url }}" alt="img" style="max-height:60px;"></td>
+            <td>
+              <button class="btn btn-sm btn-primary" data-id="{{ b.id }}" data-name="{{ b.name|e }}"
+                data-description="{{ b.description|e }}" data-image="{{ b.image_url|e }}"
+                onclick="openBuildingModal(this)">Edit</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="rooms" role="tabpanel">
+    <div class="table-responsive">
+      <table id="roomsTable" class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Room Name</th>
+            <th>Building</th>
+            <th>Capacity</th>
+            <th>Facility</th>
+            <th>Image</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.name }}</td>
+            <td>{{ r.building_name }}</td>
+            <td>{{ r.capacity }}</td>
+            <td>{{ r.facility }}</td>
+            <td><img src="{{ r.image_url }}" alt="img" style="max-height:60px;"></td>
+            <td>
+              <button class="btn btn-sm btn-warning" data-id="{{ r.id }}" data-capacity="{{ r.capacity }}"
+                data-facility="{{ r.facility|e }}" data-image="{{ r.image_url|e }}"
+                onclick="openRoomModal(this)">Edit</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Building Modal -->
+<div class="modal fade" id="editBuildingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" enctype="multipart/form-data" id="editBuildingForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Building</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" id="buildingName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" id="buildingDescription" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*"
+              onchange="previewImage(this, 'buildingImagePreview')">
+            <img id="buildingImagePreview" src="" class="img-thumbnail mt-2" style="max-height: 120px;">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Room Modal -->
+<div class="modal fade" id="editRoomModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" enctype="multipart/form-data" id="editRoomForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Sports Room</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Capacity</label>
+            <input type="number" name="capacity" class="form-control" id="roomCapacity" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Facility</label>
+            <textarea name="facility" class="form-control" id="roomFacility" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Upload Image</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*"
+              onchange="previewImage(this, 'roomImagePreview')">
+            <img id="roomImagePreview" src="" class="img-thumbnail mt-2" style="max-height: 120px;">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    new DataTable('#buildingsTable');
+    new DataTable('#roomsTable');
+  });
+
+  function openBuildingModal(button) {
+    const modal = new bootstrap.Modal(document.getElementById('editBuildingModal'));
+    const form = document.getElementById('editBuildingForm');
+    form.action = `/admin/building/${button.dataset.id}/edit`;
+    document.getElementById('buildingName').value = button.dataset.name;
+    document.getElementById('buildingDescription').value = button.dataset.description;
+    document.getElementById('buildingImagePreview').src = button.dataset.image;
+    modal.show();
+  }
+
+  function openRoomModal(button) {
+    const modal = new bootstrap.Modal(document.getElementById('editRoomModal'));
+    const form = document.getElementById('editRoomForm');
+    form.action = `/admin/sports_room/${button.dataset.id}/edit`;
+    document.getElementById('roomCapacity').value = button.dataset.capacity;
+    document.getElementById('roomFacility').value = button.dataset.facility;
+    document.getElementById('roomImagePreview').src = button.dataset.image;
+    modal.show();
+  }
+
+  function previewImage(input, targetId) {
+    const preview = document.getElementById(targetId);
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
+{% endblock %}

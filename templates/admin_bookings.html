@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - All Bookings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+
+{% block content %}
+<h2 class="mb-4">Admin Panel – All Booking Requests</h2>
+
+{% if bookings %}
+<div class="table-responsive">
+  <table id="approvalTable" class="table table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>User</th>
+        <th>Building</th>
+        <th>Room</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.id }}</td>
+        <td>
+          <strong>{{ b.username }}</strong><br>
+          <small>{{ b.email }}</small>
+        </td>
+        <td>{{ b.building_name }}</td>
+        <td>{{ b.room_name }}</td>
+        <td>{{ b.start_time }}</td>
+        <td>{{ b.end_time }}</td>
+        <td>
+          <span
+            class="badge bg-{% if b.status == 'Approve' %}success{% elif b.status == 'Reject' %}danger{% else %}secondary{% endif %}">
+            {{ b.status }}
+          </span>
+        </td>
+        <td>
+          {% if b.status == 'Pending' %}
+          <a href="{{ url_for('update_booking_status', booking_id=b.id, action='approve') }}"
+            class="btn btn-sm btn-success mb-1">Approve</a>
+          <a href="{{ url_for('update_booking_status', booking_id=b.id, action='reject') }}"
+            class="btn btn-sm btn-danger">Reject</a>
+          {% else %}
+          <em>No actions</em>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted">No booking records found.</p>
+{% endif %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    new DataTable('#approvalTable');
+  });
+</script>
+{% endblock %}
+
+{% endblock %}

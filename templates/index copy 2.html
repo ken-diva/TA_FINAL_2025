@@ -184,8 +184,6 @@
 
   });
 </script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 {% endblock %}
 
 
@@ -304,8 +302,17 @@
         <!-- Booking Form or Message -->
         <div id="sports-rooms-section" style="display: none;">
           <h6>Form Peminjaman Ruangan Olahraga</h6>
-          {% if session.user_id %}
+          {% if session.user_id and session.role != 'admin' %}
           <form method="POST" action="{{ url_for('book_room') }}">
+            {% elif session.role == 'admin' %}
+            <div class="alert alert-warning">
+              Admins are not allowed to book sport rooms.
+            </div>
+            {% elif %}
+            <div class="alert alert-warning">
+              Please <a href="{{ url_for('login') }}">login</a> to make a booking.
+            </div>
+            {% endif %}
             <input type="hidden" name="building_code" id="booking-building-code">
 
             <div class="mb-3">
