@@ -191,7 +191,7 @@ def api_sports_rooms(building_code):
         cursor = conn.cursor(dictionary=True)
         try:
             query = """
-                SELECT sr.id, sr.name, sr.capacity 
+                SELECT sr.id, sr.name, sr.capacity, sr.image_url
                 FROM sports_room sr
                 JOIN building b ON sr.id_building = b.id
                 WHERE b.code = %s
@@ -463,57 +463,172 @@ def edit_building(building_id):
 @app.route("/admin/sports_room/<int:room_id>/edit", methods=["POST"])
 @admin_required
 def edit_sports_room(room_id):
+    name = request.form.get("name")
     capacity = request.form.get("capacity")
     facility = request.form.get("facility")
-    image_url = request.form.get("image_url")
+    file = request.files.get("image_file")
 
     conn = get_db_connection()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute(
-                """
-                UPDATE sports_room SET capacity = %s, facility = %s, image_url = %s 
-                WHERE id = %s
-            """,
-                (capacity, facility, image_url, room_id),
-            )
-            conn.commit()
-            flash("Sports room updated successfully.", "success")
-        except Error as e:
-            flash(f"Update failed: {e}", "danger")
-        finally:
-            cursor.close()
-            conn.close()
-    return redirect(url_for("admin_manage"))
-    name = request.form.get("name")
-    description = request.form.get("description")
-    image_url = request.form.get("image_url")
-
-    if not name or not description:
-        flash("Name and description are required.", "danger")
+    if not conn:
+        flash("Database connection error.", "danger")
         return redirect(url_for("admin_manage"))
 
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Ambil URL lama
+        cursor.execute("SELECT image_url FROM sports_room WHERE id = %s", (room_id,))
+        result = cursor.fetchone()
+        old_image_url = result["image_url"] if result else None
+
+        image_url = old_image_url
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(file_path)
+            image_url = f"/{file_path.replace(os.sep, '/')}"
+
+        cursor.execute(
+            """
+            UPDATE sports_room
+            SET name = %s, capacity = %s, facility = %s, image_url = %s, updated_at = NOW()
+            WHERE id = %s
+        """,
+            (name, capacity, facility, image_url, room_id),
+        )
+        conn.commit()
+        flash("Sports room updated successfully.", "success")
+    except Error as e:
+        flash(f"Update failed: {e}", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("admin_manage"))
+
+
+@app.route("/admin/sports_room/add", methods=["POST"])
+@admin_required
+def add_sports_room():
+    name = request.form.get("name")
+    id_building = request.form.get("id_building")
+    capacity = request.form.get("capacity")
+    facility = request.form.get("facility")
+    file = request.files.get("image_file")
+
+    image_url = ""
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(file_path)
+        image_url = f"/{file_path.replace(os.sep, '/')}"
+
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         try:
             cursor.execute(
                 """
-                UPDATE building 
-                SET name = %s, description = %s, image_url = %s, updated_at = NOW()
-                WHERE id = %s
+                INSERT INTO sports_room (id_building, name, capacity, facility, image_url)
+                VALUES (%s, %s, %s, %s, %s)
             """,
-                (name, description, image_url, building_id),
+                (id_building, name, capacity, facility, image_url),
             )
             conn.commit()
-            flash("Building updated successfully.", "success")
+            flash("Sports room added successfully.", "success")
         except Error as e:
-            flash(f"Failed to update building: {e}", "danger")
+            flash(f"Error: {e}", "danger")
         finally:
             cursor.close()
             conn.close()
     return redirect(url_for("admin_manage"))
+
+
+@app.route("/admin/sports_room/<int:room_id>/delete", methods=["POST"])
+@admin_required
+def delete_sports_room(room_id):
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM sports_room WHERE id = %s", (room_id,))
+            conn.commit()
+            flash("Sports room deleted.", "info")
+        except Error as e:
+            flash(f"Delete failed: {e}", "danger")
+        finally:
+            cursor.close()
+            conn.close()
+    return redirect(url_for("admin_manage"))
+
+
+@app.route("/api/buildings")
+def get_buildings():
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                "SELECT id, name, code, description, image_url FROM building"
+            )
+            buildings = cursor.fetchall()
+            return jsonify(buildings)
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            cursor.close()
+            conn.close()
+    return jsonify({"error": "Database connection failed"}), 500
+
+
+@app.route("/api/buildings_with_sports_flag")
+def buildings_with_sports_flag():
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        try:
+            query = """
+                SELECT b.id, b.name, b.code, b.description, b.image_url,
+                       EXISTS (
+                           SELECT 1 FROM sports_room sr WHERE sr.id_building = b.id
+                       ) AS has_sports_room
+                FROM building b
+                ORDER BY b.name
+            """
+            cursor.execute(query)
+            buildings = cursor.fetchall()
+            return jsonify(buildings)
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            cursor.close()
+            conn.close()
+    return jsonify({"error": "Database connection failed"}), 500
+
+
+@app.route("/api/bookings/active/<building_code>")
+def get_active_bookings(building_code):
+    now = datetime.now()
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        try:
+            query = """
+                SELECT sr.name AS room_name, br.start_time, br.end_time
+                FROM booking_room br
+                JOIN sports_room sr ON br.id_sports_room = sr.id
+                JOIN building b ON sr.id_building = b.id
+                WHERE b.code = %s AND br.status = 'Approve' AND br.end_time >= %s
+                ORDER BY br.start_time ASC
+            """
+            cursor.execute(query, (building_code, now))
+            bookings = cursor.fetchall()
+            return jsonify(bookings)
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            cursor.close()
+            conn.close()
+    return jsonify({"error": "DB connection failed"}), 500
 
 
 # Error handlers
