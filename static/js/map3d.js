@@ -237,34 +237,42 @@ function highlightBuilding(mesh) {
 
 // Fetch and show approved & upcoming bookings
 function loadActiveBookings(buildingCode) {
-	const listEl = document.getElementById("active-bookings-list");
 	const sectionEl = document.getElementById("active-bookings-section");
+	const tableBody = document.getElementById("active-bookings-body");
 
-	if (!listEl || !sectionEl) return;
-
-	listEl.innerHTML =
-		'<li class="list-group-item text-muted">Memuat jadwal...</li>';
 	sectionEl.style.display = "block";
+	tableBody.innerHTML = `
+    <tr><td colspan="5" class="text-muted">Memuat jadwal...</td></tr>
+  `;
 
 	fetch(`/api/bookings/active/${buildingCode}`)
 		.then((res) => res.json())
 		.then((data) => {
-			listEl.innerHTML = "";
+			tableBody.innerHTML = "";
+
 			if (!data || data.length === 0) {
-				listEl.innerHTML =
-					'<li class="list-group-item text-muted">Tidak ada jadwal aktif.</li>';
+				tableBody.innerHTML = `
+          <tr><td colspan="5" class="text-muted">Tidak ada jadwal aktif.</td></tr>
+        `;
 				return;
 			}
-			data.forEach((b) => {
-				const item = document.createElement("li");
-				item.className = "list-group-item";
-				item.innerHTML = `<strong>${b.room_name}</strong> — ${b.start_time} s/d ${b.end_time}`;
-				listEl.appendChild(item);
+
+			data.forEach((booking, index) => {
+				const row = document.createElement("tr");
+				row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${booking.username}</td>
+          <td>${booking.booking_date}</td>
+          <td>${booking.start_time.slice(0, 5)}</td>
+          <td>${booking.end_time.slice(0, 5)}</td>
+        `;
+				tableBody.appendChild(row);
 			});
 		})
 		.catch(() => {
-			listEl.innerHTML =
-				'<li class="list-group-item text-danger">Gagal memuat jadwal.</li>';
+			tableBody.innerHTML = `
+        <tr><td colspan="5" class="text-danger">Gagal memuat jadwal.</td></tr>
+      `;
 		});
 }
 

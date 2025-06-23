@@ -143,6 +143,10 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <!-- Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- GLTFLoader for loading .glb files -->
@@ -186,6 +190,114 @@
 </script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const roomSelect = document.getElementById("sports-room");
+    const dateInput = document.getElementById("booking-date");
+    const startSelect = document.getElementById("start-time");
+    const endSelect = document.getElementById("end-time");
+
+    function disableConflictTimes(roomId, dateStr) {
+      if (!roomId || !dateStr) return;
+
+      fetch(`/api/room_schedule/${roomId}?date=${dateStr}`)
+        .then(res => res.json())
+        .then(data => {
+          const usedSlots = new Set();
+
+          // Loop peminjaman untuk mendeteksi jam yang bentrok
+          data.forEach(booking => {
+            const start = parseInt(booking.start_time.split(":")[0]);
+            const end = parseInt(booking.end_time.split(":")[0]);
+            for (let i = start; i < end; i++) {
+              usedSlots.add(i);
+            }
+          });
+
+          // Reset semua option: aktifkan dan bersihkan label/style
+          [...startSelect.options].forEach(opt => {
+            opt.disabled = false;
+            opt.textContent = opt.value;
+            opt.classList.remove("text-danger");
+          });
+
+          [...endSelect.options].forEach(opt => {
+            opt.disabled = false;
+            opt.textContent = opt.value;
+            opt.classList.remove("text-danger");
+          });
+
+          // Tandai jam yang sudah dipakai
+          [...startSelect.options].forEach(opt => {
+            const hour = parseInt(opt.value.split(":")[0]);
+            if (usedSlots.has(hour)) {
+              opt.disabled = true;
+              opt.textContent += " (terpakai)";
+              opt.classList.add("text-danger");
+            }
+          });
+
+          [...endSelect.options].forEach(opt => {
+            const hour = parseInt(opt.value.split(":")[0]);
+            if (usedSlots.has(hour - 1)) {
+              opt.disabled = true;
+              opt.textContent += " (terpakai)";
+              opt.classList.add("text-danger");
+            }
+          });
+        });
+    }
+
+    function initCalendar(roomId) {
+      if (!roomId) return;
+
+      fetch(`/api/room_booked_dates/${roomId}`)
+        .then(res => res.json())
+        .then(dates => {
+          flatpickr("#calendar-picker", {
+            dateFormat: "Y-m-d",
+            enable: [
+              function (date) {
+                return true; // show all dates
+              }
+            ],
+            onDayCreate: function (dObj, dStr, fp, dayElem) {
+              const date = dayElem.dateObj.toISOString().split("T")[0];
+              if (dates.includes(date)) {
+                dayElem.classList.add("bg-warning", "text-dark");
+                dayElem.title = "Sudah ada peminjaman";
+              }
+            },
+            onChange: function (selectedDates, dateStr, instance) {
+              if (roomSelect.value && dateStr) {
+                dateInput.value = dateStr; // isi input tanggal form
+                disableConflictTimes(roomSelect.value, dateStr);
+              }
+            }
+          });
+        });
+    }
+
+
+    // Trigger on room or date change
+    roomSelect?.addEventListener("change", () => {
+      const roomId = roomSelect.value;
+      const dateStr = dateInput.value;
+      if (roomId && dateStr) {
+        disableConflictTimes(roomId, dateStr);
+      }
+    });
+
+    dateInput?.addEventListener("change", () => {
+      const roomId = roomSelect.value;
+      const dateStr = dateInput.value;
+      if (roomId && dateStr) {
+        disableConflictTimes(roomId, dateStr);
+      }
+    });
+  });
+</script>
+
 {% endblock %}
 
 
@@ -291,60 +403,83 @@
           </div>
         </div>
 
+        <div class="mb-3">
+          <label class="form-label">Kalender Jadwal Ruangan</label>
+          <input type="text" id="calendar-picker" class="form-control" placeholder="Pilih tanggal">
+        </div>
+
+
         <!-- Jadwal Peminjaman Aktif -->
         <div id="active-bookings-section" class="mb-4" style="display: none;">
-          <h6>Jadwal Terjadwal</h6>
-          <ul id="active-bookings-list" class="list-group small">
-            <!-- Diisi oleh JavaScript -->
-          </ul>
+          <h6>Jadwal Peminjaman Aktif</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center" id="active-bookings-table">
+              <thead class="table-light">
+                <tr>
+                  <th>No</th>
+                  <th>Nama Peminjam</th>
+                  <th>Tanggal</th>
+                  <th>Jam Mulai</th>
+                  <th>Jam Selesai</th>
+                </tr>
+              </thead>
+              <tbody id="active-bookings-body">
+                <!-- Diisi JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Form Peminjaman -->
-        <div id="sports-rooms-section" style="display: none;">
-          <h6>Form Peminjaman Ruangan Olahraga</h6>
-          {% if session.user_id %}
-          <form method="POST" action="{{ url_for('book_room') }}">
-            <input type="hidden" name="building_code" id="booking-building-code">
+        <form method="POST" action="{{ url_for('book_room') }}">
+          <input type="hidden" name="building_code" id="booking-building-code">
 
-            <div class="row align-items-start">
-              <!-- Gambar ruangan olahraga -->
-              <div class="col-md-5 text-center mb-3">
-                <img id="sports-room-image" src="https://via.placeholder.com/300x200?text=Ruangan+Olahraga"
-                  alt="Gambar Ruangan" class="img-fluid rounded shadow" style="max-height: 200px;">
+          <div class="row align-items-start">
+            <!-- Gambar ruangan olahraga -->
+            <div class="col-md-5 text-center mb-3">
+              <img id="sports-room-image" src="https://via.placeholder.com/300x200?text=Ruangan+Olahraga"
+                alt="Gambar Ruangan" class="img-fluid rounded shadow" style="max-height: 200px;">
+            </div>
+
+            <!-- Form input -->
+            <div class="col-md-7">
+              <div class="mb-3">
+                <label for="sports-room" class="form-label">Pilih Ruangan</label>
+                <select class="form-select" id="sports-room" name="sports_room_id" required>
+                  <option value="">Memuat data ruangan...</option>
+                </select>
               </div>
 
-              <!-- Form input -->
-              <div class="col-md-7">
-                <div class="mb-3">
-                  <label for="sports-room" class="form-label">Pilih Ruangan</label>
-                  <select class="form-select" id="sports-room" name="sports_room_id" required>
-                    <option value="">Memuat data ruangan...</option>
+              <div class="mb-3">
+                <label for="booking-date" class="form-label">Tanggal Peminjaman</label>
+                <input type="date" class="form-control" id="booking-date" name="booking_date" required>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="start-time" class="form-label">Jam Mulai</label>
+                  <select class="form-select" id="start-time" name="start_time" required>
+                    {% for hour in range(6, 22) %}
+                    <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
+                    {% endfor %}
                   </select>
                 </div>
-
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="start-time" class="form-label">Mulai</label>
-                    <input type="datetime-local" class="form-control" id="start-time" name="start_time" required>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="end-time" class="form-label">Selesai</label>
-                    <input type="datetime-local" class="form-control" id="end-time" name="end_time" required>
-                  </div>
-                </div>
-
-                <div class="d-grid">
-                  <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
+                <div class="col-md-6 mb-3">
+                  <label for="end-time" class="form-label">Jam Selesai</label>
+                  <select class="form-select" id="end-time" name="end_time" required>
+                    {% for hour in range(7, 23) %}
+                    <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
+              </div>
             </div>
-          </form>
-          {% else %}
-          <div class="alert alert-warning mt-3">
-            Anda harus <a href="{{ url_for('login') }}">login</a> untuk mengajukan peminjaman.
           </div>
-          {% endif %}
-        </div>
+        </form>
 
 
         <!-- Jika Tidak Ada Ruangan -->

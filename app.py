@@ -207,6 +207,55 @@ def api_sports_rooms(building_code):
     return jsonify({"error": "Database connection failed"}), 500
 
 
+# @app.route("/book", methods=["POST"])
+# @login_required
+# def book_room():
+#     if session.get("role") == "admin":
+#         flash("Admins are not allowed to book rooms.", "danger")
+#         return redirect(url_for("index"))
+
+#     sports_room_id = request.form.get("sports_room_id")
+#     start_time = request.form.get("start_time")
+#     end_time = request.form.get("end_time")
+
+#     if not all([sports_room_id, start_time, end_time]):
+#         flash("All booking fields are required.", "danger")
+#         return redirect(url_for("index"))
+
+#     try:
+#         start_dt = datetime.fromisoformat(start_time)
+#         end_dt = datetime.fromisoformat(end_time)
+#         if start_dt >= end_dt:
+#             flash("Start time must be before end time.", "danger")
+#             return redirect(url_for("index"))
+#     except ValueError:
+#         flash("Invalid datetime format.", "danger")
+#         return redirect(url_for("index"))
+
+#     conn = get_db_connection()
+#     if conn:
+#         cursor = conn.cursor()
+#         try:
+#             query = """
+#                 INSERT INTO booking_room (id_user, id_sports_room, start_time, end_time)
+#                 VALUES (%s, %s, %s, %s)
+#             """
+#             cursor.execute(
+#                 query, (session["user_id"], sports_room_id, start_time, end_time)
+#             )
+#             conn.commit()
+#             flash("Booking submitted and pending approval.", "success")
+#         except Error as e:
+#             flash(f"Error booking room: {e}", "danger")
+#         finally:
+#             cursor.close()
+#             conn.close()
+#     else:
+#         flash("Database connection failed.", "danger")
+
+#     return redirect(url_for("index"))
+
+
 @app.route("/book", methods=["POST"])
 @login_required
 def book_room():
@@ -215,45 +264,100 @@ def book_room():
         return redirect(url_for("index"))
 
     sports_room_id = request.form.get("sports_room_id")
-    start_time = request.form.get("start_time")
-    end_time = request.form.get("end_time")
+    booking_date = request.form.get("booking_date")  # e.g. "2025-06-23"
+    start_time = request.form.get("start_time")  # e.g. "09:00"
+    end_time = request.form.get("end_time")  # e.g. "11:00"
 
-    if not all([sports_room_id, start_time, end_time]):
-        flash("All booking fields are required.", "danger")
+    if not all([sports_room_id, booking_date, start_time, end_time]):
+        flash("Semua kolom peminjaman harus diisi.", "danger")
         return redirect(url_for("index"))
 
     try:
-        start_dt = datetime.fromisoformat(start_time)
-        end_dt = datetime.fromisoformat(end_time)
+        start_dt = datetime.fromisoformat(f"{booking_date}T{start_time}")
+        end_dt = datetime.fromisoformat(f"{booking_date}T{end_time}")
+
         if start_dt >= end_dt:
-            flash("Start time must be before end time.", "danger")
+            flash("Jam mulai harus sebelum jam selesai.", "danger")
             return redirect(url_for("index"))
     except ValueError:
-        flash("Invalid datetime format.", "danger")
+        flash("Format tanggal atau jam tidak valid.", "danger")
         return redirect(url_for("index"))
 
     conn = get_db_connection()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            query = """
-                INSERT INTO booking_room (id_user, id_sports_room, start_time, end_time)
-                VALUES (%s, %s, %s, %s)
+    if not conn:
+        flash("Koneksi database gagal.", "danger")
+        return redirect(url_for("index"))
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Cek apakah ada konflik peminjaman (selain yang sudah Reject)
+        cursor.execute(
             """
-            cursor.execute(
-                query, (session["user_id"], sports_room_id, start_time, end_time)
+            SELECT * FROM booking_room
+            WHERE id_sports_room = %s
+              AND booking_date = %s
+              AND status != 'Reject'
+              AND (
+                  (start_time < %s AND end_time > %s)  -- overlap
+              )
+        """,
+            (sports_room_id, booking_date, end_time, start_time),
+        )
+
+        conflict = cursor.fetchone()
+        if conflict:
+            flash(
+                "Ruangan sudah dipesan pada waktu tersebut. Silakan pilih jam lain.",
+                "warning",
             )
-            conn.commit()
-            flash("Booking submitted and pending approval.", "success")
+            return redirect(url_for("index"))
+
+        # Simpan peminjaman baru
+        cursor.execute(
+            """
+            INSERT INTO booking_room (id_user, id_sports_room, booking_date, start_time, end_time)
+            VALUES (%s, %s, %s, %s, %s)
+        """,
+            (session["user_id"], sports_room_id, booking_date, start_time, end_time),
+        )
+        conn.commit()
+        flash("Peminjaman berhasil diajukan dan menunggu persetujuan.", "success")
+
+    except Error as e:
+        flash(f"Gagal menyimpan peminjaman: {e}", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("index"))
+
+
+@app.route("/api/room_schedule/<int:room_id>")
+def api_room_schedule(room_id):
+    date_str = request.args.get("date")  # format: YYYY-MM-DD
+    if not date_str:
+        return jsonify([])
+
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                """
+                SELECT start_time, end_time
+                FROM booking_room
+                WHERE id_sports_room = %s AND booking_date = %s AND status != 'Reject'
+            """,
+                (room_id, date_str),
+            )
+            bookings = cursor.fetchall()
+            return jsonify(bookings)
         except Error as e:
-            flash(f"Error booking room: {e}", "danger")
+            return jsonify({"error": str(e)}), 500
         finally:
             cursor.close()
             conn.close()
-    else:
-        flash("Database connection failed.", "danger")
-
-    return redirect(url_for("index"))
+    return jsonify({"error": "Database error"}), 500
 
 
 @app.route("/history")
@@ -605,30 +709,83 @@ def buildings_with_sports_flag():
     return jsonify({"error": "Database connection failed"}), 500
 
 
+# @app.route("/api/bookings/active/<building_code>")
+# def get_active_bookings(building_code):
+#     now = datetime.now()
+#     conn = get_db_connection()
+#     if conn:
+#         cursor = conn.cursor(dictionary=True)
+#         try:
+#             query = """
+#                 SELECT sr.name AS room_name, br.start_time, br.end_time
+#                 FROM booking_room br
+#                 JOIN sports_room sr ON br.id_sports_room = sr.id
+#                 JOIN building b ON sr.id_building = b.id
+#                 WHERE b.code = %s AND br.status = 'Approve' AND br.end_time >= %s
+#                 ORDER BY br.start_time ASC
+#             """
+#             cursor.execute(query, (building_code, now))
+#             bookings = cursor.fetchall()
+#             return jsonify(bookings)
+#         except Error as e:
+#             return jsonify({"error": str(e)}), 500
+#         finally:
+#             cursor.close()
+#             conn.close()
+#     return jsonify({"error": "DB connection failed"}), 500
+
+
 @app.route("/api/bookings/active/<building_code>")
 def get_active_bookings(building_code):
-    now = datetime.now()
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = """
+            SELECT u.username, br.booking_date, br.start_time, br.end_time
+            FROM booking_room br
+            JOIN users u ON br.id_user = u.id
+            JOIN sports_room sr ON br.id_sports_room = sr.id
+            JOIN building b ON sr.id_building = b.id
+            WHERE b.code = %s
+              AND br.status = 'Approve'
+              AND br.booking_date >= CURDATE()
+            ORDER BY br.booking_date, br.start_time
+        """
+        cursor.execute(query, (building_code,))
+        bookings = cursor.fetchall()
+        return jsonify(bookings)
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/room_booked_dates/<int:room_id>")
+def api_booked_dates(room_id):
     conn = get_db_connection()
     if conn:
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         try:
-            query = """
-                SELECT sr.name AS room_name, br.start_time, br.end_time
-                FROM booking_room br
-                JOIN sports_room sr ON br.id_sports_room = sr.id
-                JOIN building b ON sr.id_building = b.id
-                WHERE b.code = %s AND br.status = 'Approve' AND br.end_time >= %s
-                ORDER BY br.start_time ASC
-            """
-            cursor.execute(query, (building_code, now))
-            bookings = cursor.fetchall()
-            return jsonify(bookings)
+            cursor.execute(
+                """
+                SELECT DISTINCT booking_date
+                FROM booking_room
+                WHERE id_sports_room = %s AND status = 'Approve'
+            """,
+                (room_id,),
+            )
+            dates = [row[0].isoformat() for row in cursor.fetchall()]
+            return jsonify(dates)
         except Error as e:
             return jsonify({"error": str(e)}), 500
         finally:
             cursor.close()
             conn.close()
-    return jsonify({"error": "DB connection failed"}), 500
+    return jsonify({"error": "Database error"}), 500
 
 
 # Error handlers

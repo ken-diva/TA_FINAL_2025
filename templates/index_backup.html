@@ -184,6 +184,8 @@
 
   });
 </script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 {% endblock %}
 
 
@@ -225,21 +227,11 @@
             <!-- Sports Facilities -->
             <div class="legend-section">
               <h6 class="legend-section-title">🏃 Sports Facilities</h6>
-              <div class="legend-items">
-                <div class="legend-item" data-building="GDG-SPRT">
-                  <span class="building-name">Sports Complex</span>
-                  <button class="btn btn-sm btn-outline-primary zoom-btn" title="Zoom to building">
-                    <i class="bi bi-arrow-right-circle"></i>
-                  </button>
-                </div>
-                <div class="legend-item" data-building="GDG-STD">
-                  <span class="building-name">Stadium</span>
-                  <button class="btn btn-sm btn-outline-primary zoom-btn" title="Zoom to building">
-                    <i class="bi bi-arrow-right-circle"></i>
-                  </button>
-                </div>
+              <div class="legend-items" id="sports-buildings">
+                <!-- Populated by JS -->
               </div>
             </div>
+
 
             <!-- Other Buildings -->
             <div class="legend-section">
@@ -277,64 +269,74 @@
 
 <!-- Building Detail Modal -->
 <div class="modal fade" id="buildingModal" tabindex="-1" aria-labelledby="buildingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-top">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h5 class="modal-title" id="buildingModalLabel">Detail Gedung</h5>
+        <h5 class="modal-title" id="building-name">Detail Gedung</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
 
       <div class="modal-body">
 
-        <!-- Gambar Gedung -->
-        <div class="mb-3 text-center">
-          <img id="building-image" src="https://via.placeholder.com/300x200?text=Building+Image" alt="Foto Gedung"
-            class="img-fluid rounded shadow" style="max-height:200px;">
+        <!-- Gambar dan Deskripsi -->
+        <div class="row mb-4">
+          <div class="col-md-5 text-center">
+            <img id="building-image" src="https://via.placeholder.com/300x200?text=Building+Image" alt="Foto Gedung"
+              class="img-fluid rounded shadow" style="max-height: 220px;">
+          </div>
+          <div class="col-md-7">
+            <h6 class="mb-2">Deskripsi</h6>
+            <p id="building-description" class="text-muted">Deskripsi gedung ditampilkan di sini.</p>
+          </div>
         </div>
 
-        <!-- Deskripsi Gedung -->
-        <div class="mb-4">
-          <h5 id="building-name">Nama Gedung</h5>
-          <p id="building-description" class="text-muted">Deskripsi gedung ditampilkan di sini.</p>
+        <!-- Jadwal Peminjaman Aktif -->
+        <div id="active-bookings-section" class="mb-4" style="display: none;">
+          <h6>Jadwal Terjadwal</h6>
+          <ul id="active-bookings-list" class="list-group small">
+            <!-- Diisi oleh JavaScript -->
+          </ul>
         </div>
 
-        <!-- Booking Form or Message -->
+        <!-- Form Peminjaman -->
         <div id="sports-rooms-section" style="display: none;">
           <h6>Form Peminjaman Ruangan Olahraga</h6>
-          {% if session.user_id and session.role != 'admin' %}
+          {% if session.user_id %}
           <form method="POST" action="{{ url_for('book_room') }}">
-            {% elif session.role == 'admin' %}
-            <div class="alert alert-warning">
-              Admins are not allowed to book sport rooms.
-            </div>
-            {% elif %}
-            <div class="alert alert-warning">
-              Please <a href="{{ url_for('login') }}">login</a> to make a booking.
-            </div>
-            {% endif %}
             <input type="hidden" name="building_code" id="booking-building-code">
 
-            <div class="mb-3">
-              <label for="sports-room" class="form-label">Pilih Ruangan</label>
-              <select class="form-select" id="sports-room" name="sports_room_id" required>
-                <option value="">Memuat data ruangan...</option>
-              </select>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="start-time" class="form-label">Mulai</label>
-                <input type="datetime-local" class="form-control" id="start-time" name="start_time" required>
+            <div class="row align-items-start">
+              <!-- Gambar ruangan olahraga -->
+              <div class="col-md-5 text-center mb-3">
+                <img id="sports-room-image" src="https://via.placeholder.com/300x200?text=Ruangan+Olahraga"
+                  alt="Gambar Ruangan" class="img-fluid rounded shadow" style="max-height: 200px;">
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="end-time" class="form-label">Selesai</label>
-                <input type="datetime-local" class="form-control" id="end-time" name="end_time" required>
-              </div>
-            </div>
 
-            <div class="d-grid">
-              <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
+              <!-- Form input -->
+              <div class="col-md-7">
+                <div class="mb-3">
+                  <label for="sports-room" class="form-label">Pilih Ruangan</label>
+                  <select class="form-select" id="sports-room" name="sports_room_id" required>
+                    <option value="">Memuat data ruangan...</option>
+                  </select>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="start-time" class="form-label">Mulai</label>
+                    <input type="datetime-local" class="form-control" id="start-time" name="start_time" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="end-time" class="form-label">Selesai</label>
+                    <input type="datetime-local" class="form-control" id="end-time" name="end_time" required>
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
+                </div>
+              </div>
             </div>
           </form>
           {% else %}
@@ -343,6 +345,7 @@
           </div>
           {% endif %}
         </div>
+
 
         <!-- Jika Tidak Ada Ruangan -->
         <div id="no-sports-rooms" style="display: none;">
@@ -358,6 +361,8 @@
     </div>
   </div>
 </div>
+
+
 
 
 {% endblock %}
