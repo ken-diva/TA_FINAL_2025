@@ -139,6 +139,12 @@
       height: 400px;
     }
   }
+
+  #booking-date {
+    background-color: #fff !important;
+    color: #212529 !important;
+    cursor: pointer;
+  }
 </style>
 {% endblock %}
 
@@ -158,9 +164,7 @@
 <script>
   // Test modal functionality
   window.addEventListener('load', function () {
-    console.log('Page fully loaded');
     const modal = document.getElementById('buildingModal');
-    console.log('Modal element:', modal);
 
     // Add a test button to verify modal works
     const testBtn = document.createElement('button');
@@ -248,19 +252,25 @@
         });
     }
 
+    let calendarInstance = null;
+
     function initCalendar(roomId) {
-      if (!roomId) return;
+      const input = document.getElementById("booking-date");
+      if (!input || !roomId) return;
+
+      // Destroy existing calendar before re-initializing
+      if (calendarInstance) {
+        calendarInstance.destroy();
+        calendarInstance = null;
+      }
 
       fetch(`/api/room_booked_dates/${roomId}`)
         .then(res => res.json())
         .then(dates => {
-          flatpickr("#calendar-picker", {
+          calendarInstance = flatpickr(input, {
             dateFormat: "Y-m-d",
-            enable: [
-              function (date) {
-                return true; // show all dates
-              }
-            ],
+            minDate: "today",  // ⬅️ Blok tanggal sebelum hari ini
+            disableMobile: true, // agar selalu pakai UI Flatpickr
             onDayCreate: function (dObj, dStr, fp, dayElem) {
               const date = dayElem.dateObj.toISOString().split("T")[0];
               if (dates.includes(date)) {
@@ -268,16 +278,16 @@
                 dayElem.title = "Sudah ada peminjaman";
               }
             },
-            onChange: function (selectedDates, dateStr, instance) {
-              if (roomSelect.value && dateStr) {
-                dateInput.value = dateStr; // isi input tanggal form
-                disableConflictTimes(roomSelect.value, dateStr);
+            onChange: function (selectedDates, dateStr) {
+              if (roomId && dateStr) {
+                document.getElementById("booking-date").value = dateStr;
+                disableConflictTimes(roomId, dateStr);
               }
             }
           });
+
         });
     }
-
 
     // Trigger on room or date change
     roomSelect?.addEventListener("change", () => {
@@ -299,9 +309,6 @@
 </script>
 
 {% endblock %}
-
-
-
 
 {% block content %}
 <div class="row">
@@ -403,11 +410,6 @@
           </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label">Kalender Jadwal Ruangan</label>
-          <input type="text" id="calendar-picker" class="form-control" placeholder="Pilih tanggal">
-        </div>
-
 
         <!-- Jadwal Peminjaman Aktif -->
         <div id="active-bookings-section" class="mb-4" style="display: none;">
@@ -452,7 +454,7 @@
 
               <div class="mb-3">
                 <label for="booking-date" class="form-label">Tanggal Peminjaman</label>
-                <input type="date" class="form-control" id="booking-date" name="booking_date" required>
+                <input type="text" class="form-control" id="booking-date" name="booking_date" required>
               </div>
 
               <div class="row">
@@ -478,9 +480,9 @@
                 <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
               </div>
             </div>
+
           </div>
         </form>
-
 
         <!-- Jika Tidak Ada Ruangan -->
         <div id="no-sports-rooms" style="display: none;">
@@ -496,8 +498,5 @@
     </div>
   </div>
 </div>
-
-
-
 
 {% endblock %}

@@ -1,13 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    jsonify,
+)
 import mysql.connector, os
 from mysql.connector import Error
 from functools import wraps
-from datetime import datetime
-import os
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from flask import jsonify
-from datetime import datetime
-import os
 from werkzeug.utils import secure_filename
 
 # Load environment variables
@@ -334,9 +339,11 @@ def book_room():
 
 @app.route("/api/room_schedule/<int:room_id>")
 def api_room_schedule(room_id):
-    date_str = request.args.get("date")  # format: YYYY-MM-DD
-    if not date_str:
-        return jsonify([])
+    date_str = request.args.get("date")
+    try:
+        booking_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        return jsonify({"error": "Invalid date format"}), 400
 
     conn = get_db_connection()
     if conn:
@@ -348,15 +355,23 @@ def api_room_schedule(room_id):
                 FROM booking_room
                 WHERE id_sports_room = %s AND booking_date = %s AND status != 'Reject'
             """,
-                (room_id, date_str),
+                (room_id, booking_date),
             )
             bookings = cursor.fetchall()
+
+            # Konversi jika ada timedelta (defensif)
+            for b in bookings:
+                for k, v in b.items():
+                    if isinstance(v, timedelta):
+                        b[k] = str(v)
+
             return jsonify(bookings)
         except Error as e:
             return jsonify({"error": str(e)}), 500
         finally:
             cursor.close()
             conn.close()
+
     return jsonify({"error": "Database error"}), 500
 
 
@@ -743,7 +758,8 @@ def get_active_bookings(building_code):
 
     cursor = conn.cursor(dictionary=True)
     try:
-        query = """
+        cursor.execute(
+            """
             SELECT u.username, br.booking_date, br.start_time, br.end_time
             FROM booking_room br
             JOIN users u ON br.id_user = u.id
@@ -753,9 +769,17 @@ def get_active_bookings(building_code):
               AND br.status = 'Approve'
               AND br.booking_date >= CURDATE()
             ORDER BY br.booking_date, br.start_time
-        """
-        cursor.execute(query, (building_code,))
+        """,
+            (building_code,),
+        )
         bookings = cursor.fetchall()
+
+        # 🔧 Convert any timedelta to string just in case
+        for b in bookings:
+            for key, val in b.items():
+                if isinstance(val, timedelta):
+                    b[key] = str(val)
+
         return jsonify(bookings)
     except Error as e:
         return jsonify({"error": str(e)}), 500

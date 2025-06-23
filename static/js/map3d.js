@@ -240,6 +240,33 @@ function loadActiveBookings(buildingCode) {
 	const sectionEl = document.getElementById("active-bookings-section");
 	const tableBody = document.getElementById("active-bookings-body");
 
+	const hariIndonesia = [
+		"Minggu",
+		"Senin",
+		"Selasa",
+		"Rabu",
+		"Kamis",
+		"Jumat",
+		"Sabtu",
+	];
+
+	function formatTanggalIndo(dateStr) {
+		const date = new Date(dateStr);
+		const hari = hariIndonesia[date.getDay()];
+		const tgl = date.toLocaleDateString("id-ID", {
+			day: "2-digit",
+			month: "short",
+			year: "numeric",
+		});
+		return `${hari}, ${tgl}`;
+	}
+
+	function formatJam(jamStr) {
+		// contoh input: "6:00:00" → "06.00 WIB"
+		const [jam, menit] = jamStr.split(":");
+		return `${jam.padStart(2, "0")}.${menit} WIB`;
+	}
+
 	sectionEl.style.display = "block";
 	tableBody.innerHTML = `
     <tr><td colspan="5" class="text-muted">Memuat jadwal...</td></tr>
@@ -262,9 +289,9 @@ function loadActiveBookings(buildingCode) {
 				row.innerHTML = `
           <td>${index + 1}</td>
           <td>${booking.username}</td>
-          <td>${booking.booking_date}</td>
-          <td>${booking.start_time.slice(0, 5)}</td>
-          <td>${booking.end_time.slice(0, 5)}</td>
+  				<td>${formatTanggalIndo(booking.booking_date)}</td>
+					<td>${formatJam(booking.start_time)}</td>
+					<td>${formatJam(booking.end_time)}</td>
         `;
 				tableBody.appendChild(row);
 			});
@@ -273,6 +300,97 @@ function loadActiveBookings(buildingCode) {
 			tableBody.innerHTML = `
         <tr><td colspan="5" class="text-danger">Gagal memuat jadwal.</td></tr>
       `;
+		});
+}
+
+let calendarInstance = null;
+
+function initCalendar(roomId) {
+	const input = document.getElementById("booking-date");
+	if (!input || !roomId) {
+		console.warn("booking-date input atau roomId tidak ditemukan.");
+		return;
+	}
+
+	// Hancurkan instance sebelumnya jika ada
+	if (calendarInstance) {
+		calendarInstance.destroy();
+		calendarInstance = null;
+	}
+
+	fetch(`/api/room_booked_dates/${roomId}`)
+		.then((res) => res.json())
+		.then((dates) => {
+			calendarInstance = flatpickr(input, {
+				dateFormat: "Y-m-d",
+				minDate: "today",
+				disableMobile: true,
+				onDayCreate: function (dObj, dStr, fp, dayElem) {
+					const date = dayElem.dateObj.toISOString().split("T")[0];
+					if (dates.includes(date)) {
+						dayElem.classList.add("bg-warning", "text-dark");
+						dayElem.title = "Sudah ada peminjaman";
+					}
+				},
+				onChange: function (selectedDates, dateStr) {
+					if (roomId && dateStr) {
+						input.value = dateStr;
+						disableConflictTimes(roomId, dateStr);
+					}
+				},
+			});
+		});
+}
+
+function disableConflictTimes(roomId, dateStr) {
+	const startSelect = document.getElementById("start-time");
+	const endSelect = document.getElementById("end-time");
+	if (!roomId || !dateStr || !startSelect || !endSelect) return;
+
+	fetch(`/api/room_schedule/${roomId}?date=${dateStr}`)
+		.then((res) => res.json())
+		.then((data) => {
+			const usedSlots = new Set();
+
+			data.forEach((booking) => {
+				const start = parseInt(booking.start_time.split(":")[0]);
+				const end = parseInt(booking.end_time.split(":")[0]);
+				for (let i = start; i < end; i++) {
+					usedSlots.add(i);
+				}
+			});
+
+			// Reset semua opsi
+			[...startSelect.options].forEach((opt) => {
+				opt.disabled = false;
+				opt.textContent = opt.value;
+				opt.classList.remove("text-danger");
+			});
+
+			[...endSelect.options].forEach((opt) => {
+				opt.disabled = false;
+				opt.textContent = opt.value;
+				opt.classList.remove("text-danger");
+			});
+
+			// Tandai jam bentrok
+			[...startSelect.options].forEach((opt) => {
+				const hour = parseInt(opt.value.split(":")[0]);
+				if (usedSlots.has(hour)) {
+					opt.disabled = true;
+					opt.textContent += " (terpakai)";
+					opt.classList.add("text-danger");
+				}
+			});
+
+			[...endSelect.options].forEach((opt) => {
+				const hour = parseInt(opt.value.split(":")[0]);
+				if (usedSlots.has(hour - 1)) {
+					opt.disabled = true;
+					opt.textContent += " (terpakai)";
+					opt.classList.add("text-danger");
+				}
+			});
 		});
 }
 
@@ -355,6 +473,12 @@ function showBuildingModal(buildingCode) {
 				if (roomSelect.options.length > 0) {
 					roomSelect.dispatchEvent(new Event("change"));
 				}
+
+				// ✅ Tambahkan ini
+				const selectedRoomId = roomSelect.value;
+				if (selectedRoomId) {
+					initCalendar(selectedRoomId);
+				}
 			});
 
 		// Load jadwal aktif
@@ -390,6 +514,8 @@ function showBuildingModal(buildingCode) {
 		activeSection?.style?.setProperty("display", "none");
 		if (activeList) activeList.innerHTML = "";
 	}
+
+	loadActiveBookings(buildingCode);
 
 	// Tampilkan modal
 	new bootstrap.Modal(modalElement).show();
