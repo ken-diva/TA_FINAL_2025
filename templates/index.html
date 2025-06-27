@@ -433,56 +433,58 @@
         </div>
 
         <!-- Form Peminjaman -->
-        <form method="POST" action="{{ url_for('book_room') }}">
-          <input type="hidden" name="building_code" id="booking-building-code">
+        <div id="sports-rooms-section" style="display: none;">
+          <form method="POST" action="{{ url_for('book_room') }}">
+            <input type="hidden" name="building_code" id="booking-building-code">
 
-          <div class="row align-items-start">
-            <!-- Gambar ruangan olahraga -->
-            <div class="col-md-5 text-center mb-3">
-              <img id="sports-room-image" src="https://via.placeholder.com/300x200?text=Ruangan+Olahraga"
-                alt="Gambar Ruangan" class="img-fluid rounded shadow" style="max-height: 200px;">
-            </div>
-
-            <!-- Form input -->
-            <div class="col-md-7">
-              <div class="mb-3">
-                <label for="sports-room" class="form-label">Pilih Ruangan</label>
-                <select class="form-select" id="sports-room" name="sports_room_id" required>
-                  <option value="">Memuat data ruangan...</option>
-                </select>
+            <div class="row align-items-start">
+              <!-- Gambar ruangan olahraga -->
+              <div class="col-md-5 text-center mb-3">
+                <img id="sports-room-image" src="https://via.placeholder.com/300x200?text=Ruangan+Olahraga"
+                  alt="Gambar Ruangan" class="img-fluid rounded shadow" style="max-height: 200px;">
               </div>
 
-              <div class="mb-3">
-                <label for="booking-date" class="form-label">Tanggal Peminjaman</label>
-                <input type="text" class="form-control" id="booking-date" name="booking_date" required>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="start-time" class="form-label">Jam Mulai</label>
-                  <select class="form-select" id="start-time" name="start_time" required>
-                    {% for hour in range(6, 22) %}
-                    <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
-                    {% endfor %}
+              <!-- Form input -->
+              <div class="col-md-7">
+                <div class="mb-3">
+                  <label for="sports-room" class="form-label">Pilih Ruangan</label>
+                  <select class="form-select" id="sports-room" name="sports_room_id" required>
+                    <option value="">Memuat data ruangan...</option>
                   </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                  <label for="end-time" class="form-label">Jam Selesai</label>
-                  <select class="form-select" id="end-time" name="end_time" required>
-                    {% for hour in range(7, 23) %}
-                    <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
-                    {% endfor %}
-                  </select>
+
+                <div class="mb-3">
+                  <label for="booking-date" class="form-label">Tanggal Peminjaman</label>
+                  <input type="text" class="form-control" id="booking-date" name="booking_date" required>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="start-time" class="form-label">Jam Mulai</label>
+                    <select class="form-select" id="start-time" name="start_time" required>
+                      {% for hour in range(6, 22) %}
+                      <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="end-time" class="form-label">Jam Selesai</label>
+                    <select class="form-select" id="end-time" name="end_time" required>
+                      {% for hour in range(7, 23) %}
+                      <option value="{{ '%02d:00'|format(hour) }}">{{ "%02d:00"|format(hour) }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
                 </div>
               </div>
 
-              <div class="d-grid">
-                <button type="submit" class="btn btn-success">Ajukan Peminjaman</button>
-              </div>
             </div>
-
-          </div>
-        </form>
+          </form>
+        </div>
 
         <!-- Jika Tidak Ada Ruangan -->
         <div id="no-sports-rooms" style="display: none;">

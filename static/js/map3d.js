@@ -450,7 +450,7 @@ function showBuildingModal(buildingCode) {
 	const isSports = meta.has_sports_room;
 
 	if (isSports) {
-		// Tampilkan form & jadwal
+		// Tampilkan form & jadwal untuk gedung olahraga
 		sportsSection?.style?.setProperty("display", "block");
 		noSportsSection?.style?.setProperty("display", "none");
 		activeSection?.style?.setProperty("display", "block");
@@ -510,41 +510,17 @@ function showBuildingModal(buildingCode) {
 				}
 			});
 
-		// Load jadwal aktif
-		if (activeList) {
-			activeList.innerHTML =
-				'<li class="list-group-item text-muted">Memuat jadwal...</li>';
-
-			fetch(`/api/bookings/active/${buildingCode}`)
-				.then((res) => res.json())
-				.then((data) => {
-					activeList.innerHTML = "";
-					if (!data || data.length === 0) {
-						activeList.innerHTML =
-							'<li class="list-group-item text-muted">Tidak ada jadwal aktif.</li>';
-						return;
-					}
-					data.forEach((b) => {
-						const item = document.createElement("li");
-						item.className = "list-group-item";
-						item.innerHTML = `<strong>${b.room_name}</strong> — ${b.start_time} s/d ${b.end_time}`;
-						activeList.appendChild(item);
-					});
-				})
-				.catch(() => {
-					activeList.innerHTML =
-						'<li class="list-group-item text-danger">Gagal memuat jadwal.</li>';
-				});
-		}
+		// Load jadwal aktif untuk gedung olahraga
+		loadActiveBookings(buildingCode);
 	} else {
-		// Bukan gedung olahraga → sembunyikan form & jadwal
+		// Gedung akademik → sembunyikan form & jadwal, tampilkan pesan
 		sportsSection?.style?.setProperty("display", "none");
 		noSportsSection?.style?.setProperty("display", "block");
 		activeSection?.style?.setProperty("display", "none");
+
+		// Clear any existing content
 		if (activeList) activeList.innerHTML = "";
 	}
-
-	loadActiveBookings(buildingCode);
 
 	// Tampilkan modal
 	new bootstrap.Modal(modalElement).show();
