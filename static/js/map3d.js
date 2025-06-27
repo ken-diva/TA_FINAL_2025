@@ -132,9 +132,17 @@ async function loadGLBModel() {
 				model.traverse((child) => {
 					if (child.isMesh) {
 						const meshName = child.name || "";
-						const matchCode = Object.keys(buildingMeta).find((code) =>
-							meshName.includes(code)
-						);
+
+						// 🔧 FIX: Use exact match or word boundaries to avoid partial matches
+						const matchCode = Object.keys(buildingMeta).find((code) => {
+							// Try exact match first
+							if (meshName === code) return true;
+
+							// If not exact, check if code exists as a complete word/segment
+							// This prevents "GDG-F" from matching "GDG-FIF"
+							const regex = new RegExp(`\\b${code.replace(/[-]/g, "\\-")}\\b`);
+							return regex.test(meshName);
+						});
 
 						if (matchCode) {
 							child.material = child.material.clone();
@@ -143,11 +151,30 @@ async function loadGLBModel() {
 							child.userData.isBuilding = true;
 							child.userData.buildingCode = matchCode;
 
+							// 🎨 Set building colors based on type
+							const meta = buildingMeta[matchCode];
+							let idleColor, activeColor;
+
+							if (meta && meta.has_sports_room) {
+								// Sports facilities: Red theme
+								idleColor = 0xff8282; // Light red
+								activeColor = 0xdc2525; // Dark red
+							} else {
+								// Academic buildings: Blue theme
+								idleColor = 0x91c8e4; // Light blue
+								activeColor = 0x102e50; // Dark blue
+							}
+
+							// Apply idle color initially
+							child.material.color.setHex(idleColor);
+
 							buildings.push({
 								mesh: child,
 								code: matchCode,
-								originalColor: child.material.color?.getHex() || 0xffffff,
+								originalColor: idleColor,
+								activeColor: activeColor,
 								originalEmissive: child.material.emissive?.getHex() || 0x000000,
+								isSports: meta && meta.has_sports_room,
 							});
 						}
 					}
@@ -214,6 +241,7 @@ function onMouseClick(event) {
 }
 
 function highlightBuilding(mesh) {
+	// Reset previously selected building to its original color
 	if (selectedBuilding) {
 		const prev = buildings.find((b) => b.mesh === selectedBuilding);
 		if (prev) {
@@ -226,10 +254,11 @@ function highlightBuilding(mesh) {
 	selectedBuilding = mesh;
 	const b = buildings.find((b) => b.mesh === mesh);
 	if (b) {
-		mesh.material.color.setHex(0xff0000);
+		// Set to active color (darker version)
+		mesh.material.color.setHex(b.activeColor);
 		if (mesh.material.emissive) {
-			mesh.material.emissive.setHex(0x440000);
-			mesh.material.emissiveIntensity = 0.3;
+			mesh.material.emissive.setHex(0x000000);
+			mesh.material.emissiveIntensity = 0.1;
 		}
 		updateLegendSelection(b.code);
 	}
@@ -592,6 +621,9 @@ function updateLegendSelection(code) {
 function zoomToBuilding(code) {
 	const b = buildings.find((b) => b.code === code);
 	if (!b) return;
+
+	// Highlight the building when zooming to it
+	highlightBuilding(b.mesh);
 
 	const box = new THREE.Box3().setFromObject(b.mesh);
 	const center = box.getCenter(new THREE.Vector3());
