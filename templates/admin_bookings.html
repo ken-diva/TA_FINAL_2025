@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Admin - All Bookings{% endblock %}
+{% block title %}Admin - Seluruh Peminjaman{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -8,7 +8,7 @@
 
 
 {% block content %}
-<h2 class="mb-4">Admin Panel – All Booking Requests</h2>
+<h2 class="mb-4">Admin Panel – Pengajuan Peminjaman</h2>
 
 {% if bookings %}
 <div class="table-responsive">
@@ -17,12 +17,12 @@
       <tr>
         <th>#</th>
         <th>User</th>
-        <th>Building</th>
-        <th>Room</th>
-        <th>Start</th>
-        <th>End</th>
+        <th>Gedung</th>
+        <th>Ruangan</th>
+        <th>Mulai</th>
+        <th>Selesai</th>
         <th>Status</th>
-        <th>Action</th>
+        <th>#</th>
       </tr>
     </thead>
     <tbody>
@@ -48,7 +48,7 @@
           <a href="{{ url_for('update_booking_status', booking_id=b.id, action='approve') }}"
             class="btn btn-sm btn-success mb-1">Approve</a>
           <a href="{{ url_for('update_booking_status', booking_id=b.id, action='reject') }}"
-            class="btn btn-sm btn-danger">Reject</a>
+            class="btn btn-sm btn-danger">Tolak</a>
           {% else %}
           <em>No actions</em>
           {% endif %}
@@ -59,7 +59,7 @@
   </table>
 </div>
 {% else %}
-<p class="text-muted">No booking records found.</p>
+<p class="text-muted">Tidak ada pengajuan.</p>
 {% endif %}
 
 {% block extra_js %}

@@ -1,50 +1,45 @@
 -- Clear existing building data (optional, be careful in production)
--- DELETE FROM sports_room WHERE id_building IN (SELECT id FROM building);
--- DELETE FROM building;
+DELETE FROM sports_room WHERE id_building IN (SELECT id FROM building);
+DELETE FROM building;
 
 -- Insert all buildings from the 3D model
 INSERT INTO building (name, code, description, image_url) VALUES 
-('Building A', 'GDG-A', 'Academic Building A - General classrooms and lecture halls', '/static/images/buildings/gdg-a.jpg'),
-('Building B', 'GDG-B', 'Academic Building B - Laboratory and research facilities', '/static/images/buildings/gdg-b.jpg'),
-('Basketball Court 1', 'GDG-BAS1', 'Indoor Basketball Court 1 - Professional court with spectator seating', '/static/images/buildings/gdg-bas1.jpg'),
-('Basketball Court 2', 'GDG-BAS2', 'Indoor Basketball Court 2 - Training and practice facility', '/static/images/buildings/gdg-bas2.jpg'),
-('Building E', 'GDG-E', 'Engineering Building - Engineering departments and workshops', '/static/images/buildings/gdg-e.jpg'),
-('Building F', 'GDG-F', 'Faculty Building - Administrative offices and meeting rooms', '/static/images/buildings/gdg-f.jpg'),
-('FIF Building', 'GDG-FIF', 'Faculty of Informatics - Computer labs and IT facilities', '/static/images/buildings/gdg-fif.jpg'),
-('FIT Building', 'GDG-FIT', 'Faculty of Industrial Technology - Engineering labs and workshops', '/static/images/buildings/gdg-fit.jpg'),
-('FKSF/FEB/PERP Building', 'GDG-FKSFEBPERP', 'Business, Communication, and Library complex', '/static/images/buildings/gdg-fksfebperp.jpg'),
-('FRI Building', 'GDG-FRI', 'Faculty of Creative Industries - Art studios and design labs', '/static/images/buildings/gdg-fri.jpg'),
-('FTE Building', 'GDG-FTE', 'Faculty of Electrical Engineering - Electronics and electrical labs', '/static/images/buildings/gdg-fte.jpg'),
-('GKU Building', 'GDG-GKU', 'Main Auditorium - Large capacity auditorium for events', '/static/images/buildings/gdg-gku.jpg'),
-('GSG Building', 'GDG-GSG', 'Multipurpose Hall - Sports and cultural activities', '/static/images/buildings/gdg-gsg.jpg'),
-('Jogging Track', 'GDG-JOG', 'Outdoor Jogging Track - 400m athletic track', '/static/images/buildings/gdg-jog.jpg'),
-('Language Center', 'GDG-LING', 'Language Learning Center - Language labs and classrooms', '/static/images/buildings/gdg-ling.jpg'),
-('MSU Building', 'GDG-MSU', 'Student Center - Student organizations and activities', '/static/images/buildings/gdg-msu.jpg'),
-('Graduate Building', 'GDG-PASCA', 'Postgraduate Building - Graduate programs and research', '/static/images/buildings/gdg-pasca.jpg'),
-('Male Dormitory', 'GDG-PUTRA', 'Male Student Dormitory - Accommodation for male students', '/static/images/buildings/gdg-putra.jpg'),
-('Female Dormitory', 'GDG-PUTRI', 'Female Student Dormitory - Accommodation for female students', '/static/images/buildings/gdg-putri.jpg'),
-('Rectorate Building', 'GDG-REKT', 'University Administration - Main administrative offices', '/static/images/buildings/gdg-rekt.jpg'),
-('Sports Complex', 'GDG-SPRT', 'Main Sports Complex - Various indoor sports facilities', '/static/images/buildings/gdg-sprt.jpg'),
-('Stadium', 'GDG-STD', 'University Stadium - Football field and athletic facilities', '/static/images/buildings/gdg-std.jpg'),
-('TUCH Building', 'GDG-TUCH', 'University Health Center - Medical and health services', '/static/images/buildings/gdg-tuch.jpg'),
-('TULT Building', 'GDG-TULT', 'Advanced Technology Lab - Research and development center', '/static/images/buildings/gdg-tult.jpg');
+('Gedung A', 'GDG-A', 'Gedung A Telkom University adalah bagian dari Grha Wiyata Cacuk Sudarijanto yang merupakan Gedung Kuliah Umum (GKU). Gedung ini merupakan tempat yang digunakan untuk aktivitas perkuliahan dan termasuk salah satu gedung ikonik di kampus Telkom University.', ''),
+('Gedung B', 'GDG-B', 'Gedung B (Gedung Kuliah Umum A) di Telkom University merupakan salah satu fasilitas penting untuk perkuliahan umum di kampus tersebut, yang berfungsi sebagai ruang kelas, fasilitas penelitian, dan lingkungan belajar yang kondusif. Gedung ini menyediakan berbagai ruangan untuk aktivitas akademik mahasiswa dan staf pengajar, mendukung peran Telkom University sebagai kampus penelitian dan kewirausahaan.', ''),
+('Lapangan Basket Selatan', 'GDG-BAS1', 'Outdoor Lapangan Basket Selatan - Professional court with spectator seating', ''),
+('Lapangan Basket Utara', 'GDG-BAS2', 'Outdoor Lapangan Basket Outdoor 2 - Training and practice facility', ''),
+('Gedung E', 'GDG-E', 'Gedung Kultubai Utara', ''),
+('Gedung F', 'GDG-F', 'Gedung Kultubai Selatan', ''),
+('Gedung FIF ', 'GDG-FIF', 'Gedung Fakultas Informatika yang bernama Gedung Panambulai. Gedung ini juga berisi direktorat PUTI dan residensi mahasiswa S2 dan S3 Fakultas Informatika', ''),
+('Gedung FIT ', 'GDG-FIT', 'Gedung Fakultas Ilmu Terapan. Gedung ini memiliki banyak laboratorium praktikum untuk mesin berat dan elektronik.', ''),
+('Gedung FKSF/FEB/PERP ', 'GDG-FKSFEBPERP', 'Gedung gabungan antara Fakultas Komunikasi Sosial, Fakultas Ekonomi dan Bisnis serta Perpustakaan. Gedung fakultas berada pada sisi kanan dan kiri sedangkan perpustakaan berada pada lantai 5.', ''),
+('Gedung FRI ', 'GDG-FRI', 'Gedung Fakultas Rekayasa Industri', ''),
+('Gedung FTE ', 'GDG-FTE', 'Gedung Fakultas Teknik Elektro', ''),
+('Gedung GKU ', 'GDG-GKU', 'Gedung Kuliah Umum. Gedung ini adalah pusat perkuliahan umum untuk seluruh mahasiswa Telkom University', ''),
+('Gedung GSG ', 'GDG-GSG', 'Gedung Serba Guna.', ''),
+('Jogging Track', 'GDG-JOG', 'Tempat Jogging Outdoor yang dapat digunakan oleh staff, mahasiswa maupun penduduk sekitar', ''),
+('Gedung Lingian', 'GDG-LING', 'Gedung ini memiliki kamar yang dapat disewa oleh orangtua mahasiswa terutama pada saat wisuda. Beberapa kamar juga menjadi tempat praktikum untuk mahasiswa jurusan D3 Perhotelan', ''),
+('Masjid MSU', 'GDG-MSU', 'Masjid Syamsul Ulum.', ''),
+('Gedung Pascasarjana', 'GDG-PASCA', 'Gedung Pascasarjana digunakan sebagai pusat administrasi perkuliahan S2 ataupun S3. Disini juga terdapat ruang residensi cadangan jika dibutuhkan', ''),
+('Asrama Putra', 'GDG-PUTRA', 'Asrama putra Telkom University adalah fasilitas wajib untuk mahasiswa baru selama tahun pertama kuliah, terdiri dari 10 gedung asrama yang menyediakan fasilitas kamar seperti tempat tidur, lemari, meja, kursi, dan kamar mandi dalam, serta fasilitas umum seperti WiFi gratis, lapangan olahraga, laundry, kantin, dan pusat pembinaan karakter melalui bidang adaptif, spiritual, akademis, dan sosial, dengan lokasi strategis di dalam kawasan kampus dekat dengan gedung perkuliahan.', ''),
+('Asrama Putri', 'GDG-PUTRI', 'Asrama Putri Telkom University adalah pusat hunian dan pembinaan karakter bagi mahasiswi baru yang wajib tinggal selama satu tahun pertama kuliah. Fasilitasnya lengkap, meliputi kamar pribadi dengan tempat tidur, meja, dan lemari, serta fasilitas umum seperti wifi, laundry, kantin, dan area olahraga. Asrama ini juga dilengkapi sistem keamanan yang baik dengan bantuan kakak asrama dan keamanan gedung, serta berbagai kegiatan pembinaan yang fokus pada adaptasi, spiritualitas, akademis, dan sosial.', ''),
+('Gedung Rektorat', 'GDG-REKT', 'Gedung Rektorat adalah pusat kegiatan staff dan tempat ruangan rektor serta jajarannya. Disini terdapat unit yang mengatur peran dosen, staff dan juga hubungan kerjasama baik luar maupun dalam negeri.', ''),
+('Sport Center', 'GDG-SPRT', 'Sport Center adalah pusat kegiatan untuk staff maupun mahasiswa. Disini terdapat lapangan basket indoor, lapangan futsal indoor dan lapangan volley indoor.', ''),
+('Student Center', 'GDG-STD', 'Student Center adalah pusat kegiatan UKM mahasiswa. Disini UKM diberikan ruangan untuk menyimpan peralatan dan berlatih jika dibutuhkan. Didalam gedung ini juga terdapat lapangan badminton yang bisa digunakan oleh staff ataupun mahasiswa', ''),
+('Gedung TUCH', 'GDG-TUCH', 'Telkom University Convention Hall adalah gedung dengan kapasitas 4000 orang yang sering digunakan untuk acara seperti pengenalan mahasiswa baru, ulang tahun Tel-U dan lainnya.', ''),
+('Gedung TULT', 'GDG-TULT', 'Telkom University Landmark Tower adalah gedung paling baru di Tel-U. Gedung ini menjadi tempat perkuliahan dan juga administrasi untuk tiga fakultas yaitu FIF, FTE dan FRI', ''),
+('Fasilitas Outdoor', 'GDG-OUT', 'Fasilitas Outdoor adalah fasilitas yang disediakan oleh Universitas Telkom yang berada diluar bangunan. Hal ini bertujuan agar kegiatan yang dilakukan dapat lebih bebas dan lepas.', '');
 
 -- Add some sports rooms to the sports-related buildings
 INSERT INTO sports_room (id_building, name, capacity, facility, image_url) VALUES 
--- Basketball Courts
-((SELECT id FROM building WHERE code = 'GDG-BAS1'), 'Main Basketball Court', 200, 'Professional court, electronic scoreboard, spectator seating, locker rooms', '/static/images/rooms/bas1-main.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-BAS2'), 'Practice Court A', 50, 'Full-size practice court, basic equipment', '/static/images/rooms/bas2-practice.jpg'),
-
--- Sports Complex
-((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Badminton Court 1', 20, '4 badminton courts, equipment rental', '/static/images/rooms/sprt-badminton1.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Badminton Court 2', 20, '4 badminton courts, professional lighting', '/static/images/rooms/sprt-badminton2.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Table Tennis Hall', 30, '8 table tennis tables, tournament setup available', '/static/images/rooms/sprt-tabletennis.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Fitness Center', 50, 'Modern gym equipment, cardio and weight training', '/static/images/rooms/sprt-fitness.jpg'),
-
--- GSG Building
-((SELECT id FROM building WHERE code = 'GDG-GSG'), 'Multipurpose Hall', 500, 'Large hall for sports, events, and exhibitions', '/static/images/rooms/gsg-main.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-GSG'), 'Martial Arts Dojo', 40, 'Tatami mats, mirrors, training equipment', '/static/images/rooms/gsg-dojo.jpg'),
-
--- Stadium
-((SELECT id FROM building WHERE code = 'GDG-STD'), 'Football Field', 1000, 'Standard football field, athletic track, grandstand', '/static/images/rooms/std-football.jpg'),
-((SELECT id FROM building WHERE code = 'GDG-STD'), 'Athletic Track', 200, '400m running track, field event areas', '/static/images/rooms/std-track.jpg');
+-- Sport Center
+((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Lapangan Basket', 50, 'Lapangan Basket indoor', ''),
+((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Lapangan Volley', 50, 'Lapangan Volley indoor', ''),
+((SELECT id FROM building WHERE code = 'GDG-SPRT'), 'Lapangan Futsal', 50, 'Lapangan Futsal indoor', '');
+-- Student Center
+INSERT INTO sports_room (id_building, name, capacity, facility, image_url) VALUES
+((SELECT id FROM building WHERE code = 'GDG-STD'), 'Lapangan Bulutangkis', 60, 'Lapangan Bulutangkis indoor', '');
+-- Lapangan Outdoor
+INSERT INTO sports_room (id_building, name, capacity, facility, image_url) VALUES
+((SELECT id FROM building WHERE code = 'GDG-BAS1'), 'Lapangan Basket 3X3 selatan', 6, 'Lapangan Basket 3X3 selatan', ''),
+((SELECT id FROM building WHERE code = 'GDG-BAS2'), 'Lapangan Basket 3X3 utara', 6, 'Lapangan Basket 3X3 utara', '');

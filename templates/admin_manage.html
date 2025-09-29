@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Admin - Manage Buildings & Rooms{% endblock %}
+{% block title %}Admin - Manage Gedung dan Ruangan Olahraga{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Admin – Manage Buildings & Sports Rooms</h2>
+<h2 class="mb-4">Admin – Manage Gedung dan Ruangan Olahraga</h2>
 
 <ul class="nav nav-tabs mb-4" id="manageTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active" id="buildings-tab" data-bs-toggle="tab" data-bs-target="#buildings" type="button"
-      role="tab">Buildings</button>
+      role="tab">Gedung</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms" type="button" role="tab">Sports
-      Rooms</button>
+    <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms" type="button"
+      role="tab">Ruangan Olahraga</button>
   </li>
 </ul>
 
@@ -27,11 +27,11 @@
         <thead class="table-light">
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Code</th>
-            <th>Description</th>
-            <th>Image</th>
-            <th>Action</th>
+            <th>Nama</th>
+            <th>Kode</th>
+            <th>Deskripsi</th>
+            <th>Gambar</th>
+            <th>#</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +58,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
       <h5 class="mb-0">Daftar Ruangan Olahraga</h5>
       <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">
-        + Add Room
+        + Tambah Ruangan
       </button>
     </div>
 
@@ -67,12 +67,12 @@
         <thead class="table-light">
           <tr>
             <th>ID</th>
-            <th>Room Name</th>
-            <th>Building</th>
-            <th>Capacity</th>
-            <th>Facility</th>
-            <th>Image</th>
-            <th>Action</th>
+            <th>Nama Ruangan</th>
+            <th>Nama Gedung</th>
+            <th>Kapasitas</th>
+            <th>Fasilitas</th>
+            <th>Gambar</th>
+            <th>#</th>
           </tr>
         </thead>
         <tbody>

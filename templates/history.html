@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Booking History{% endblock %}
+{% block title %}Riwayat Peminjaman{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">My Booking History</h2>
+<h2 class="mb-4">History Riwayat Peminjaman</h2>
 
 {% if bookings %}
 <table class="table table-bordered">
   <thead class="table-light">
     <tr>
-      <th>Building</th>
-      <th>Room</th>
-      <th>Start Time</th>
-      <th>End Time</th>
+      <th>Gedung</th>
+      <th>Ruangan</th>
+      <th>Mulai</th>
+      <th>Selesai</th>
       <th>Status</th>
     </tr>
   </thead>
@@ -34,6 +34,6 @@
   </tbody>
 </table>
 {% else %}
-<p class="text-muted">No bookings found.</p>
+<p class="text-muted">Tidak ada riwayat peminajaman.</p>
 {% endif %}
 {% endblock %}

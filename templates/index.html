@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Sport Room Booking{% endblock %}
+{% block title %}Home - Peminjaman Ruangan{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -313,31 +313,36 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <h1 class="mb-4">Welcome to Sport Room Booking System</h1>
+    <h1 class="mb-4">Selamat datang di aplikasi PinRu (Pinjam Ruangan)</h1>
 
     {% if session.user_id %}
     <div class="alert alert-info">
       <h5>Hello, {{ session.username }}!</h5>
-      <p>You are logged in as a <strong>{{ session.role }}</strong>.</p>
+      <!-- <p>You are logged in as a <strong>{{ session.role }}</strong>.</p> -->
     </div>
     {% else %}
-    <div class="alert alert-warning">
-      <h5>Welcome, Guest!</h5>
-      <p>Please <a href="{{ url_for('login') }}">login</a> or <a href="{{ url_for('register') }}">register</a> to make
-        bookings.</p>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      Harap <a href="{{ url_for('login') }}">login</a> untuk mengajukan peminjaman.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    <!-- <div class="alert alert-warning alert-dismissible fade show"> -->
+    <!-- <h5>Selamat Datang!</h5> -->
+    <!-- <p>Harap <a href="{{ url_for('login') }}">login</a> or <a href="{{ url_for('register') }}">register</a> untuk
+        mengajukan peminajaman.</p> -->
+    <!-- <p>Harap <a href="{{ url_for('login') }}">login</a> untuk mengajukan peminjaman.</p> -->
+    <!-- </div> -->
     {% endif %}
 
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">3D Building Map</h5>
-        <p class="card-text">Click on any building to view available sports rooms and make bookings. Use mouse to rotate
-          and zoom.</p>
+        <h5 class="card-title">Denah 3D Universitas Telkom</h5>
+        <p class="card-text">Klik gedung mana pun untuk melihat ruang olahraga yang tersedia dan melakukan peminjaman.
+          Gunakan mouse untuk memutar atau memperbesar.</p>
         <div id="map-wrapper" class="position-relative">
           <!-- Legend Sidebar -->
           <div id="legend-sidebar" class="legend-sidebar">
             <div class="legend-header">
-              <h6>Building Directory</h6>
+              <h6>Daftar Gedung</h6>
               <button class="btn btn-sm btn-light" id="toggle-sidebar" title="Hide sidebar">
                 <i class="bi bi-chevron-left"></i>
               </button>
@@ -345,7 +350,7 @@
 
             <!-- Sports Facilities -->
             <div class="legend-section">
-              <h6 class="legend-section-title">🏃 Sports Facilities</h6>
+              <h6 class="legend-section-title">🏃 Fasilitas Olahraga</h6>
               <div class="legend-items" id="sports-buildings">
                 <!-- Populated by JS -->
               </div>
@@ -354,7 +359,7 @@
 
             <!-- Other Buildings -->
             <div class="legend-section">
-              <h6 class="legend-section-title">🏢 Academic Buildings</h6>
+              <h6 class="legend-section-title">🏢 Gedung Akademik</h6>
               <div class="legend-items" id="academic-buildings">
                 <!-- Will be populated by JavaScript -->
               </div>
