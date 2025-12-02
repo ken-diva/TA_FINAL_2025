@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Admin - Seluruh Peminjaman{% endblock %}
+{% block title %}Daftar Peminjaman{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -8,17 +8,18 @@
 
 
 {% block content %}
-<h2 class="mb-4">Admin Panel – Pengajuan Peminjaman</h2>
+<h2 class="mb-4">Approval Pengajuan Peminjaman</h2>
 
 {% if bookings %}
 <div class="table-responsive">
   <table id="approvalTable" class="table table-bordered align-middle">
     <thead class="table-light">
       <tr>
-        <th>#</th>
+        <th>No.</th>
         <th>User</th>
         <th>Gedung</th>
         <th>Ruangan</th>
+        <th>Tanggal</th>
         <th>Mulai</th>
         <th>Selesai</th>
         <th>Status</th>
@@ -28,15 +29,16 @@
     <tbody>
       {% for b in bookings %}
       <tr>
-        <td>{{ b.id }}</td>
+        <td>{{ loop.index }}</td>
         <td>
           <strong>{{ b.username }}</strong><br>
           <small>{{ b.email }}</small>
         </td>
         <td>{{ b.building_name }}</td>
         <td>{{ b.room_name }}</td>
-        <td>{{ b.start_time }}</td>
-        <td>{{ b.end_time }}</td>
+        <td>{{ b.booking_date }}</td>
+        <td>{{ b.start_time | format_time }}</td>
+        <td>{{ b.end_time | format_time }}</td>
         <td>
           <span
             class="badge bg-{% if b.status == 'Approve' %}success{% elif b.status == 'Reject' %}danger{% else %}secondary{% endif %}">
@@ -46,9 +48,9 @@
         <td>
           {% if b.status == 'Pending' %}
           <a href="{{ url_for('update_booking_status', booking_id=b.id, action='approve') }}"
-            class="btn btn-sm btn-success mb-1">Approve</a>
+            class="btn btn-sm btn-success">Approve</a>
           <a href="{{ url_for('update_booking_status', booking_id=b.id, action='reject') }}"
-            class="btn btn-sm btn-danger">Tolak</a>
+            class="btn btn-sm btn-danger">Reject</a>
           {% else %}
           <em>No actions</em>
           {% endif %}

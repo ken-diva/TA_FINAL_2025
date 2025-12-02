@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Admin - Riwayat Peminjaman{% endblock %}
+{% block title %}Riwayat Peminjaman{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Admin – Riwayat Peminjaman</h2>
+<h2 class="mb-4">Riwayat Peminjaman</h2>
 
 {% if bookings %}
 <div class="table-responsive">
   <table id="bookingHistoryTable" class="table table-striped table-bordered">
     <thead class="table-light">
       <tr>
-        <th>ID</th>
+        <th>No.</th>
         <th>User</th>
         <th>Gedung</th>
         <th>Ruangan</th>
+        <th>Tanggal</th>
         <th>Mulai</th>
         <th>Selesai</th>
         <th>Status</th>
@@ -26,15 +27,16 @@
     <tbody>
       {% for b in bookings %}
       <tr>
-        <td>{{ b.id }}</td>
+        <td>{{ loop.index }}</td>
         <td>
           {{ b.username }}<br>
           <small class="text-muted">{{ b.email }}</small>
         </td>
         <td>{{ b.building_name }}</td>
         <td>{{ b.room_name }}</td>
-        <td>{{ b.start_time }}</td>
-        <td>{{ b.end_time }}</td>
+        <td>{{ b.booking_date }}</td>
+        <td>{{ b.start_time | format_time }}</td>
+        <td>{{ b.end_time | format_time }}</td>
         <td>
           <span
             class="badge bg-{% if b.status == 'Approve' %}success{% elif b.status == 'Reject' %}danger{% else %}secondary{% endif %}">

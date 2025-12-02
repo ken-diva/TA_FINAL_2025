@@ -3,7 +3,7 @@
 {% block title %}Riwayat Peminjaman{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">History Riwayat Peminjaman</h2>
+<h2 class="mb-4">Riwayat Peminjaman</h2>
 
 {% if bookings %}
 <table class="table table-bordered">
@@ -11,6 +11,7 @@
     <tr>
       <th>Gedung</th>
       <th>Ruangan</th>
+      <th>Tanggal Peminjaman</th>
       <th>Mulai</th>
       <th>Selesai</th>
       <th>Status</th>
@@ -21,8 +22,11 @@
     <tr>
       <td>{{ b.building_name }}</td>
       <td>{{ b.room_name }}</td>
-      <td>{{ b.start_time }}</td>
-      <td>{{ b.end_time }}</td>
+      <td>
+        {{ b.booking_date.strftime('%d %B %Y') }}
+      </td>
+      <td>{{ b.start_time | format_time }}</td>
+      <td>{{ b.end_time | format_time }}</td>
       <td>
         <span
           class="badge bg-{% if b.status == 'Approve' %}success{% elif b.status == 'Reject' %}danger{% else %}secondary{% endif %}">
@@ -34,6 +38,6 @@
   </tbody>
 </table>
 {% else %}
-<p class="text-muted">Tidak ada riwayat peminajaman.</p>
+<p class="text-muted">Tidak ada riwayat peminjaman.</p>
 {% endif %}
 {% endblock %}

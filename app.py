@@ -14,6 +14,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from utils import format_time
 
 # Load environment variables
 load_dotenv()
@@ -25,6 +26,9 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# Register custom Jinja2 filter - for timedelta formatting
+app.jinja_env.filters["format_time"] = format_time
 
 # Ensure upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -42,7 +46,7 @@ def get_db_connection():
             host=os.getenv("MYSQL_HOST", "localhost"),
             user=os.getenv("MYSQL_USER", "root"),
             password=os.getenv("MYSQL_PASSWORD", ""),
-            database=os.getenv("MYSQL_DB", "sport_room_booking"),
+            database=os.getenv("MYSQL_DB", "ta_2025"),
             port=int(os.getenv("MYSQL_PORT", 3306)),
         )
         return connection
@@ -56,7 +60,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
-            flash("Please login first.", "warning")
+            flash("Harap login terlebih dahulu.", "warning")
             return redirect(url_for("login"))
         return f(*args, **kwargs)
 
@@ -68,14 +72,23 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
-            flash("Please login first.", "warning")
+            flash("Harap login terlebih dahulu.", "warning")
             return redirect(url_for("login"))
         if session.get("role") != "admin":
-            flash("Admin access required.", "danger")
+            flash("Dibutuhkan akses Admin untuk mengakses halaman ini.", "danger")
             return redirect(url_for("index"))
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+# Custom filter for timedelta formatting
+def format_time(t):
+    # pastikan ini timedelta
+    total_seconds = int(t.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    return f"{hours:02d}.{minutes:02d}"
 
 
 # Homepage route
@@ -92,7 +105,7 @@ def login():
         password = request.form.get("password")
 
         if not username or not password:
-            flash("Please enter both username and password.", "danger")
+            flash("Mohon masukan username dan password dengan benar.", "danger")
             return render_template("login.html")
 
         conn = get_db_connection()
@@ -111,10 +124,10 @@ def login():
                     session["email"] = user["email"]
                     session["role"] = user["role"]
 
-                    flash(f'Welcome back, {user["username"]}!', "success")
+                    flash(f'Selamat datang, {user["username"]}!', "success")
                     return redirect(url_for("index"))
                 else:
-                    flash("Invalid username or password.", "danger")
+                    flash("Username atau password tidak valid.", "danger")
             except Error as e:
                 flash(f"Database error: {e}", "danger")
             finally:
@@ -137,15 +150,15 @@ def register():
 
         # Validation
         if not all([username, password, confirm_password, email]):
-            flash("All fields are required.", "danger")
+            flash("Harap isi semua field yang tersedia.", "danger")
             return render_template("register.html")
 
         if password != confirm_password:
-            flash("Passwords do not match.", "danger")
+            flash("Password salah.", "danger")
             return render_template("register.html")
 
         if len(password) < 6:
-            flash("Password must be at least 6 characters long.", "danger")
+            flash("Password harus memiliki minimal 6 karakter.", "danger")
             return render_template("register.html")
 
         conn = get_db_connection()
@@ -158,7 +171,7 @@ def register():
                 existing_user = cursor.fetchone()
 
                 if existing_user:
-                    flash("Username or email already exists.", "danger")
+                    flash("Username atau email sudah digunakan.", "danger")
                 else:
                     # Insert new user
                     insert_query = """
@@ -168,7 +181,7 @@ def register():
                     cursor.execute(insert_query, (username, password, email))
                     conn.commit()
 
-                    flash("Registration successful! Please login.", "success")
+                    flash("Registrasi berhasil. Silakan login.", "success")
                     return redirect(url_for("login"))
             except Error as e:
                 flash(f"Database error: {e}", "danger")
@@ -185,7 +198,7 @@ def register():
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("You have been logged out.", "info")
+    flash("Logout berhasil.", "info")
     return redirect(url_for("index"))
 
 
@@ -265,7 +278,7 @@ def api_sports_rooms(building_code):
 @login_required
 def book_room():
     if session.get("role") == "admin":
-        flash("Admins are not allowed to book rooms.", "danger")
+        flash("Admin tidak diperbolehkan untuk melakukan peminjaman ruangan.", "danger")
         return redirect(url_for("index"))
 
     sports_room_id = request.form.get("sports_room_id")
@@ -312,7 +325,7 @@ def book_room():
         conflict = cursor.fetchone()
         if conflict:
             flash(
-                "Ruangan sudah dipesan pada waktu tersebut. Silakan pilih jam lain.",
+                "Ruangan sudah dipinjam pada waktu tersebut. Silakan pilih jam lain.",
                 "warning",
             )
             return redirect(url_for("index"))
@@ -384,7 +397,7 @@ def history():
         try:
             query = """
                 SELECT b.name AS building_name, sr.name AS room_name,
-                       br.start_time, br.end_time, br.status
+                       br.booking_date, br.start_time, br.end_time, br.status
                 FROM booking_room br
                 JOIN sports_room sr ON br.id_sports_room = sr.id
                 JOIN building b ON sr.id_building = b.id
@@ -395,7 +408,7 @@ def history():
             bookings = cursor.fetchall()
             return render_template("history.html", bookings=bookings)
         except Error as e:
-            flash(f"Error retrieving booking history: {e}", "danger")
+            flash(f"Gagal memuat riwayat peminjaman: {e}", "danger")
             return render_template("history.html", bookings=[])
         finally:
             cursor.close()
@@ -413,19 +426,19 @@ def admin_bookings():
         try:
             query = """
                 SELECT br.id, u.username, u.email, b.name AS building_name,
-                       sr.name AS room_name, br.start_time, br.end_time, br.status
+                       sr.name AS room_name, br.start_time, br.end_time, br.status, br.booking_date
                 FROM booking_room br
                 JOIN users u ON br.id_user = u.id
                 JOIN sports_room sr ON br.id_sports_room = sr.id
                 JOIN building b ON sr.id_building = b.id
-                WHERE u.role != 'admin'
+                WHERE u.role != 'admin' AND br.status = 'Pending'
                 ORDER BY br.created_at DESC
             """
             cursor.execute(query)
             bookings = cursor.fetchall()
             return render_template("admin_bookings.html", bookings=bookings)
         except Error as e:
-            flash(f"Error loading bookings: {e}", "danger")
+            flash(f"Gagal memuat daftar peminjaman: {e}", "danger")
             return render_template("admin_bookings.html", bookings=[])
         finally:
             cursor.close()
@@ -438,7 +451,7 @@ def admin_bookings():
 @admin_required
 def update_booking_status(booking_id, action):
     if action not in ["approve", "reject"]:
-        flash("Invalid action.", "danger")
+        flash("Aksi tidak valid.", "danger")
         return redirect(url_for("admin_bookings"))
 
     status = "Approve" if action == "approve" else "Reject"
@@ -452,9 +465,9 @@ def update_booking_status(booking_id, action):
                 (status, booking_id),
             )
             conn.commit()
-            flash(f"Booking #{booking_id} has been {status.lower()}d.", "success")
+            flash(f"Peminjaman #{booking_id} sudah {status.lower()}d.", "success")
         except Error as e:
-            flash(f"Failed to update booking: {e}", "danger")
+            flash(f"Gagal memperbarui status peminjaman: {e}", "danger")
         finally:
             cursor.close()
             conn.close()
@@ -472,8 +485,8 @@ def admin_booking_history():
         cursor = conn.cursor(dictionary=True)
         try:
             query = """
-                SELECT br.id, u.username, u.email, b.name AS building_name,
-                       sr.name AS room_name, br.start_time, br.end_time, br.status
+                SELECT br.id, u.username, u.email, b.name AS building_name, 
+                       sr.name AS room_name, br.start_time, br.end_time, br.status, br.booking_date
                 FROM booking_room br
                 JOIN users u ON br.id_user = u.id
                 JOIN sports_room sr ON br.id_sports_room = sr.id
@@ -485,7 +498,7 @@ def admin_booking_history():
             history = cursor.fetchall()
             return render_template("admin_history.html", bookings=history)
         except Error as e:
-            flash(f"Failed to load history: {e}", "danger")
+            flash(f"Gagal memuat riwayat peminjaman: {e}", "danger")
             return render_template("admin_history.html", bookings=[])
         finally:
             cursor.close()
@@ -536,7 +549,7 @@ def edit_building(building_id):
 
     # Basic validation
     if not name or not description:
-        flash("Name and description are required.", "danger")
+        flash("Nama dan deskripsi harus diisi.", "danger")
         return redirect(url_for("admin_manage"))
 
     conn = get_db_connection()
@@ -569,7 +582,7 @@ def edit_building(building_id):
             (name, description, image_url, building_id),
         )
         conn.commit()
-        flash("Building updated successfully.", "success")
+        flash("Gedung berhasil diperbaharui.", "success")
     except Error as e:
         flash(f"Update failed: {e}", "danger")
     finally:
@@ -615,7 +628,7 @@ def edit_sports_room(room_id):
             (name, capacity, facility, image_url, room_id),
         )
         conn.commit()
-        flash("Sports room updated successfully.", "success")
+        flash("Ruangan olahraga berhasil diperbaharui.", "success")
     except Error as e:
         flash(f"Update failed: {e}", "danger")
     finally:
@@ -653,7 +666,7 @@ def add_sports_room():
                 (id_building, name, capacity, facility, image_url),
             )
             conn.commit()
-            flash("Sports room added successfully.", "success")
+            flash("Ruangan olahraga berhasil ditambahkan.", "success")
         except Error as e:
             flash(f"Error: {e}", "danger")
         finally:
@@ -671,7 +684,7 @@ def delete_sports_room(room_id):
         try:
             cursor.execute("DELETE FROM sports_room WHERE id = %s", (room_id,))
             conn.commit()
-            flash("Sports room deleted.", "info")
+            flash("Ruangan olahraga berhasil dihapus.", "info")
         except Error as e:
             flash(f"Delete failed: {e}", "danger")
         finally:
@@ -760,7 +773,7 @@ def get_active_bookings(building_code):
     try:
         cursor.execute(
             """
-            SELECT u.username, br.booking_date, br.start_time, br.end_time
+            SELECT u.username, br.booking_date, br.start_time, br.end_time, sr.name AS room_name
             FROM booking_room br
             JOIN users u ON br.id_user = u.id
             JOIN sports_room sr ON br.id_sports_room = sr.id

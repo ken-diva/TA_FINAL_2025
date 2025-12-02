@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Admin - Manage Gedung dan Ruangan Olahraga{% endblock %}
+{% block title %}Kelola Gedung dan Ruangan Olahraga{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Admin – Manage Gedung dan Ruangan Olahraga</h2>
+<h2 class="mb-4">Kelola Gedung dan Ruangan Olahraga</h2>
 
 <ul class="nav nav-tabs mb-4" id="manageTabs" role="tablist">
   <li class="nav-item" role="presentation">
@@ -26,7 +26,7 @@
       <table id="buildingsTable" class="table table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th>ID</th>
+            <th>No.</th>
             <th>Nama</th>
             <th>Kode</th>
             <th>Deskripsi</th>
@@ -37,7 +37,7 @@
         <tbody>
           {% for b in buildings %}
           <tr>
-            <td>{{ b.id }}</td>
+            <td>{{ loop.index }}</td>
             <td>{{ b.name }}</td>
             <td>{{ b.code }}</td>
             <td>{{ b.description }}</td>
@@ -66,7 +66,7 @@
       <table id="roomsTable" class="table table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th>ID</th>
+            <th>No.</th>
             <th>Nama Ruangan</th>
             <th>Nama Gedung</th>
             <th>Kapasitas</th>
@@ -78,7 +78,7 @@
         <tbody>
           {% for r in rooms %}
           <tr>
-            <td>{{ r.id }}</td>
+            <td>{{ loop.index }}</td>
             <td>{{ r.name }}</td>
             <td>{{ r.building_name }}</td>
             <td>{{ r.capacity }}</td>
@@ -90,7 +90,7 @@
                 onclick="openRoomModal(this)">Edit</button>
 
               <form method="POST" action="{{ url_for('delete_sports_room', room_id=r.id) }}" style="display:inline;"
-                onsubmit="return confirm('Are you sure you want to delete this room?');">
+                onsubmit="return confirm('Yakin ingin menghapus ruangan ini? Aksi ini tidak dapat dibatalkan.');">
                 <button type="submit" class="btn btn-sm btn-danger">Delete</button>
               </form>
             </td>
@@ -111,28 +111,28 @@
     <form method="POST" enctype="multipart/form-data" id="editBuildingForm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Building</h5>
+          <h5 class="modal-title">Edit Gedung</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">Name</label>
+            <label class="form-label">Nama</label>
             <input type="text" name="name" class="form-control" id="buildingName" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Description</label>
+            <label class="form-label">Deskripsi</label>
             <textarea name="description" class="form-control" id="buildingDescription" required></textarea>
           </div>
           <div class="mb-3">
-            <label class="form-label">Upload Image</label>
+            <label class="form-label">Foto Gedung</label>
             <input type="file" name="image_file" class="form-control" accept="image/*"
               onchange="previewImage(this, 'buildingImagePreview')">
             <img id="buildingImagePreview" src="" class="img-thumbnail mt-2" style="max-height: 120px;">
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary" type="submit">Save Changes</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Simpan</button>
         </div>
       </div>
     </form>
@@ -145,31 +145,31 @@
     <form method="POST" enctype="multipart/form-data" id="editRoomForm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Sports Room</h5>
+          <h5 class="modal-title">Edit Ruangan Olahraga</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">Room Name</label>
+            <label class="form-label">Nama Lapangan</label>
             <input type="text" name="name" class="form-control" id="roomName" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Capacity</label>
+            <label class="form-label">Kapasitas</label>
             <input type="number" name="capacity" class="form-control" id="roomCapacity" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Facility</label>
+            <label class="form-label">Fasilitas</label>
             <textarea name="facility" class="form-control" id="roomFacility" required></textarea>
           </div>
           <div class="mb-3">
-            <label class="form-label">Upload Image</label>
+            <label class="form-label">Foto Ruangan</label>
             <input type="file" name="image_file" class="form-control" accept="image/*"
               onchange="previewImage(this, 'roomImagePreview')">
             <img id="roomImagePreview" src="" class="img-thumbnail mt-2" style="max-height: 120px;">
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
           <button class="btn btn-primary" type="submit">Save Changes</button>
         </div>
       </div>
@@ -183,39 +183,39 @@
     <form method="POST" enctype="multipart/form-data" action="{{ url_for('add_sports_room') }}">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Add New Sports Room</h5>
+          <h5 class="modal-title">Tambah Ruangan Olahraga</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">Building</label>
+            <label class="form-label">Gedung</label>
             <select name="id_building" class="form-select" required>
-              <option value="">Select building</option>
+              <option value="">Pilih Gedung</option>
               {% for b in buildings %}
               <option value="{{ b.id }}">{{ b.name }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Room Name</label>
+            <label class="form-label">Nama Ruangan</label>
             <input type="text" name="name" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Capacity</label>
+            <label class="form-label">Kapasitas</label>
             <input type="number" name="capacity" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Facility</label>
+            <label class="form-label">Fasilitas</label>
             <textarea name="facility" class="form-control" required></textarea>
           </div>
           <div class="mb-3">
-            <label class="form-label">Upload Image</label>
+            <label class="form-label">Foto Ruangan</label>
             <input type="file" name="image_file" class="form-control" accept="image/*">
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary" type="submit">Add Room</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Tambah</button>
         </div>
       </div>
     </form>
