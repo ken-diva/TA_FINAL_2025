@@ -8,7 +8,7 @@ from flask import (
     flash,
     jsonify,
 )
-import mysql.connector, os
+import mysql.connector, os, sys
 from mysql.connector import Error
 from functools import wraps
 from datetime import datetime, timedelta
@@ -225,55 +225,84 @@ def api_sports_rooms(building_code):
     return jsonify({"error": "Database connection failed"}), 500
 
 
+# # versi awal sebelum revisi - rentan race condition
 # @app.route("/book", methods=["POST"])
 # @login_required
 # def book_room():
 #     if session.get("role") == "admin":
-#         flash("Admins are not allowed to book rooms.", "danger")
+#         flash("Admin tidak diperbolehkan untuk melakukan peminjaman ruangan.", "danger")
 #         return redirect(url_for("index"))
 
 #     sports_room_id = request.form.get("sports_room_id")
-#     start_time = request.form.get("start_time")
-#     end_time = request.form.get("end_time")
+#     booking_date = request.form.get("booking_date")  # e.g. "2025-06-23"
+#     start_time = request.form.get("start_time")  # e.g. "09:00"
+#     end_time = request.form.get("end_time")  # e.g. "11:00"
 
-#     if not all([sports_room_id, start_time, end_time]):
-#         flash("All booking fields are required.", "danger")
+#     if not all([sports_room_id, booking_date, start_time, end_time]):
+#         flash("Semua kolom peminjaman harus diisi.", "danger")
 #         return redirect(url_for("index"))
 
 #     try:
-#         start_dt = datetime.fromisoformat(start_time)
-#         end_dt = datetime.fromisoformat(end_time)
+#         start_dt = datetime.fromisoformat(f"{booking_date}T{start_time}")
+#         end_dt = datetime.fromisoformat(f"{booking_date}T{end_time}")
+
 #         if start_dt >= end_dt:
-#             flash("Start time must be before end time.", "danger")
+#             flash("Jam mulai harus sebelum jam selesai.", "danger")
 #             return redirect(url_for("index"))
 #     except ValueError:
-#         flash("Invalid datetime format.", "danger")
+#         flash("Format tanggal atau jam tidak valid.", "danger")
 #         return redirect(url_for("index"))
 
 #     conn = get_db_connection()
-#     if conn:
-#         cursor = conn.cursor()
-#         try:
-#             query = """
-#                 INSERT INTO booking_room (id_user, id_sports_room, start_time, end_time)
-#                 VALUES (%s, %s, %s, %s)
+#     if not conn:
+#         flash("Koneksi database gagal.", "danger")
+#         return redirect(url_for("index"))
+
+#     cursor = conn.cursor(dictionary=True)
+#     try:
+#         # Cek apakah ada konflik peminjaman (selain yang sudah Reject)
+#         cursor.execute(
 #             """
-#             cursor.execute(
-#                 query, (session["user_id"], sports_room_id, start_time, end_time)
+#             SELECT * FROM booking_room
+#             WHERE id_sports_room = %s
+#               AND booking_date = %s
+#               AND status != 'Reject'
+#               AND (
+#                   (start_time < %s AND end_time > %s)  -- overlap
+#               )
+#         """,
+#             (sports_room_id, booking_date, end_time, start_time),
+#         )
+
+#         conflict = cursor.fetchone()
+#         if conflict:
+#             flash(
+#                 "Ruangan sudah dipinjam pada waktu tersebut. Silakan pilih jam lain.",
+#                 "warning",
 #             )
-#             conn.commit()
-#             flash("Booking submitted and pending approval.", "success")
-#         except Error as e:
-#             flash(f"Error booking room: {e}", "danger")
-#         finally:
-#             cursor.close()
-#             conn.close()
-#     else:
-#         flash("Database connection failed.", "danger")
+#             return redirect(url_for("index"))
+
+#         # Simpan peminjaman baru
+#         cursor.execute(
+#             """
+#             INSERT INTO booking_room (id_user, id_sports_room, booking_date, start_time, end_time)
+#             VALUES (%s, %s, %s, %s, %s)
+#         """,
+#             (session["user_id"], sports_room_id, booking_date, start_time, end_time),
+#         )
+#         conn.commit()
+#         flash("Peminjaman berhasil diajukan dan menunggu persetujuan.", "success")
+
+#     except Error as e:
+#         flash(f"Gagal menyimpan peminjaman: {e}", "danger")
+#     finally:
+#         cursor.close()
+#         conn.close()
 
 #     return redirect(url_for("index"))
 
 
+# ini untuk menjawab revisi - mengatasi race condition peminjaman
 @app.route("/book", methods=["POST"])
 @login_required
 def book_room():
@@ -282,14 +311,15 @@ def book_room():
         return redirect(url_for("index"))
 
     sports_room_id = request.form.get("sports_room_id")
-    booking_date = request.form.get("booking_date")  # e.g. "2025-06-23"
-    start_time = request.form.get("start_time")  # e.g. "09:00"
-    end_time = request.form.get("end_time")  # e.g. "11:00"
+    booking_date = request.form.get("booking_date")
+    start_time = request.form.get("start_time")
+    end_time = request.form.get("end_time")
 
     if not all([sports_room_id, booking_date, start_time, end_time]):
         flash("Semua kolom peminjaman harus diisi.", "danger")
         return redirect(url_for("index"))
 
+    # Parsing waktu
     try:
         start_dt = datetime.fromisoformat(f"{booking_date}T{start_time}")
         end_dt = datetime.fromisoformat(f"{booking_date}T{end_time}")
@@ -307,42 +337,50 @@ def book_room():
         return redirect(url_for("index"))
 
     cursor = conn.cursor(dictionary=True)
+
     try:
-        # Cek apakah ada konflik peminjaman (selain yang sudah Reject)
+        # ⛔ MULAI TRANSAKSI (kunci semua operasi hingga commit)
+        conn.start_transaction()
+
+        # 🔒 Kunci semua booking pada ruangan ini untuk tanggal ini
+        # supaya tidak ada dua user yang booking bersamaan.
         cursor.execute(
             """
-            SELECT * FROM booking_room
+            SELECT id FROM booking_room
             WHERE id_sports_room = %s
               AND booking_date = %s
               AND status != 'Reject'
-              AND (
-                  (start_time < %s AND end_time > %s)  -- overlap
-              )
-        """,
+              AND (start_time < %s AND end_time > %s)
+            FOR UPDATE
+            """,
             (sports_room_id, booking_date, end_time, start_time),
         )
 
         conflict = cursor.fetchone()
         if conflict:
+            conn.rollback()
             flash(
                 "Ruangan sudah dipinjam pada waktu tersebut. Silakan pilih jam lain.",
                 "warning",
             )
             return redirect(url_for("index"))
 
-        # Simpan peminjaman baru
+        # 📌 Jika aman → buat booking
         cursor.execute(
             """
             INSERT INTO booking_room (id_user, id_sports_room, booking_date, start_time, end_time)
             VALUES (%s, %s, %s, %s, %s)
-        """,
+            """,
             (session["user_id"], sports_room_id, booking_date, start_time, end_time),
         )
+
         conn.commit()
         flash("Peminjaman berhasil diajukan dan menunggu persetujuan.", "success")
 
     except Error as e:
+        conn.rollback()
         flash(f"Gagal menyimpan peminjaman: {e}", "danger")
+
     finally:
         cursor.close()
         conn.close()
@@ -364,7 +402,7 @@ def api_room_schedule(room_id):
         try:
             cursor.execute(
                 """
-                SELECT start_time, end_time
+                SELECT start_time, end_time, status
                 FROM booking_room
                 WHERE id_sports_room = %s AND booking_date = %s AND status != 'Reject'
             """,

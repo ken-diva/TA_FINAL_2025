@@ -348,6 +348,13 @@ function initCalendar(roomId) {
     calendarInstance = null;
   }
 
+  function toYMD(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
   fetch(`/api/room_booked_dates/${roomId}`)
     .then((res) => res.json())
     .then((dates) => {
@@ -355,8 +362,15 @@ function initCalendar(roomId) {
         dateFormat: "Y-m-d",
         minDate: "today",
         disableMobile: true,
+        // onDayCreate: function (dObj, dStr, fp, dayElem) {
+        //   const date = dayElem.dateObj.toISOString().split("T")[0];
+        //   if (dates.includes(date)) {
+        //     dayElem.classList.add("bg-warning", "text-dark");
+        //     dayElem.title = "Sudah ada peminjaman";
+        //   }
+        // },
         onDayCreate: function (dObj, dStr, fp, dayElem) {
-          const date = dayElem.dateObj.toISOString().split("T")[0];
+          const date = toYMD(dayElem.dateObj); // <-- gunakan fungsi lokal, bukan toISOString()
           if (dates.includes(date)) {
             dayElem.classList.add("bg-warning", "text-dark");
             dayElem.title = "Sudah ada peminjaman";
@@ -372,6 +386,60 @@ function initCalendar(roomId) {
     });
 }
 
+// ini sebelum di revisi
+// function disableConflictTimes(roomId, dateStr) {
+//   const startSelect = document.getElementById("start-time");
+//   const endSelect = document.getElementById("end-time");
+//   if (!roomId || !dateStr || !startSelect || !endSelect) return;
+
+//   fetch(`/api/room_schedule/${roomId}?date=${dateStr}`)
+//     .then((res) => res.json())
+//     .then((data) => {
+//       const usedSlots = new Set();
+
+//       data.forEach((booking) => {
+//         const start = parseInt(booking.start_time.split(":")[0]);
+//         const end = parseInt(booking.end_time.split(":")[0]);
+//         for (let i = start; i < end; i++) {
+//           usedSlots.add(i);
+//         }
+//       });
+
+//       // Reset semua opsi
+//       [...startSelect.options].forEach((opt) => {
+//         opt.disabled = false;
+//         opt.textContent = opt.value;
+//         opt.classList.remove("text-danger");
+//       });
+
+//       [...endSelect.options].forEach((opt) => {
+//         opt.disabled = false;
+//         opt.textContent = opt.value;
+//         opt.classList.remove("text-danger");
+//       });
+
+//       // Tandai jam bentrok
+//       [...startSelect.options].forEach((opt) => {
+//         const hour = parseInt(opt.value.split(":")[0]);
+//         if (usedSlots.has(hour)) {
+//           opt.disabled = true;
+//           opt.textContent += " (terpakai)";
+//           opt.classList.add("text-danger");
+//         }
+//       });
+
+//       [...endSelect.options].forEach((opt) => {
+//         const hour = parseInt(opt.value.split(":")[0]);
+//         if (usedSlots.has(hour - 1)) {
+//           opt.disabled = true;
+//           opt.textContent += " (terpakai)";
+//           opt.classList.add("text-danger");
+//         }
+//       });
+//     });
+// }
+
+// ini setelah di revisi
 function disableConflictTimes(roomId, dateStr) {
   const startSelect = document.getElementById("start-time");
   const endSelect = document.getElementById("end-time");
@@ -380,13 +448,20 @@ function disableConflictTimes(roomId, dateStr) {
   fetch(`/api/room_schedule/${roomId}?date=${dateStr}`)
     .then((res) => res.json())
     .then((data) => {
-      const usedSlots = new Set();
+      // Kumpulan jam terpakai berdasarkan status
+      const approvedSlots = new Set();
+      const pendingSlots = new Set();
 
       data.forEach((booking) => {
         const start = parseInt(booking.start_time.split(":")[0]);
         const end = parseInt(booking.end_time.split(":")[0]);
+
         for (let i = start; i < end; i++) {
-          usedSlots.add(i);
+          if (booking.status === "Approve") {
+            approvedSlots.add(i);
+          } else if (booking.status === "Pending") {
+            pendingSlots.add(i);
+          }
         }
       });
 
@@ -394,31 +469,42 @@ function disableConflictTimes(roomId, dateStr) {
       [...startSelect.options].forEach((opt) => {
         opt.disabled = false;
         opt.textContent = opt.value;
-        opt.classList.remove("text-danger");
+        opt.classList.remove("text-danger", "text-warning");
       });
 
       [...endSelect.options].forEach((opt) => {
         opt.disabled = false;
         opt.textContent = opt.value;
-        opt.classList.remove("text-danger");
+        opt.classList.remove("text-danger", "text-warning");
       });
 
-      // Tandai jam bentrok
+      // Apply status ke START TIME
       [...startSelect.options].forEach((opt) => {
         const hour = parseInt(opt.value.split(":")[0]);
-        if (usedSlots.has(hour)) {
+
+        if (approvedSlots.has(hour)) {
           opt.disabled = true;
           opt.textContent += " (terpakai)";
           opt.classList.add("text-danger");
+        } else if (pendingSlots.has(hour)) {
+          opt.disabled = true;
+          opt.textContent += " (pending)";
+          opt.classList.add("text-warning");
         }
       });
 
+      // Apply status ke END TIME
       [...endSelect.options].forEach((opt) => {
         const hour = parseInt(opt.value.split(":")[0]);
-        if (usedSlots.has(hour - 1)) {
+
+        if (approvedSlots.has(hour - 1)) {
           opt.disabled = true;
           opt.textContent += " (terpakai)";
           opt.classList.add("text-danger");
+        } else if (pendingSlots.has(hour - 1)) {
+          opt.disabled = true;
+          opt.textContent += " (pending)";
+          opt.classList.add("text-warning");
         }
       });
     });
